@@ -8,18 +8,14 @@ from .DeviceComponent import DeviceComponent
 from .SpecialSessionComponent import SpecialSessionComponent
 from .InstrumentControllerComponent import InstrumentControllerComponent
 from .SubSelectorComponent import SubSelectorComponent  # noqa
-from .StepSequencerComponent import StepSequencerComponent
+from .CKStepSequencerComponent import CKStepSequencerComponent
 from .StepSequencerComponent2 import StepSequencerComponent2
 from .NoteRepeatComponent import NoteRepeatComponent
 from _Framework.SceneComponent import SceneComponent
 from .SpecialProSessionComponent import SpecialProSessionComponent
 import Live
 import time
-try:
-    exec("from .Settings import Settings")
-except ImportError:
-    exec("from .Settings import *")
-
+from .Settings import Settings
 class MainSelectorComponent(ModeSelectorComponent):
 
 	""" Class that reassigns the button on the launchpad to different functions """
@@ -93,7 +89,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 		self._sub_modes.set_update_callback(self._update_control_channels)
 
 		#User2 stepSequencer (Drum & Melodic)
-		self._stepseq = StepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface)
+		self._stepseq = CKStepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface)
 		self._stepseq.set_osd(self._osd)
 		
 		#User2 stepSequencer (Retro style)
