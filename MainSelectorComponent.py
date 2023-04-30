@@ -54,7 +54,10 @@ class MainSelectorComponent(ModeSelectorComponent):
 
 		#initialize index variables
 		self._mode_index = 0 #Inherited from parent
-		self._main_mode_index = 0 #LP original modes
+		# self._main_mode_index = 0 #LP original modes
+		# CK main mode
+		self._main_mode_index =2
+
 		self._sub_mode_list = [0, 0, 0, 0]
 		for index in range(4):
 			self._sub_mode_list[index] = 0
