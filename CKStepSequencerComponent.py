@@ -3,9 +3,9 @@ from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.CompoundComponent import CompoundComponent
 from _Framework.ButtonElement import ButtonElement
 from _Framework.Util import find_if
-
+# logger = logging.getLogger(__name__)
 from .StepSequencerComponent import LoopSelectorComponent, NoteSelectorComponent
-
+from .CKNoteEditorComponent import CKNoteEditorComponent
 try:
     from itertools import imap
 except ImportError:
@@ -25,6 +25,66 @@ STEPSEQ_MODE_MULTINOTE = 2
 STEPSEQ_MODE_SCALE_EDIT = 10
 
 LONG_BUTTON_PRESS = 1.0
+
+class CKNoteSelectorComponent(ControlSurfaceComponent):
+
+    def __init__(self, step_sequencer, buttons, control_surface):
+        self._clip = None
+        self._step_sequencer = step_sequencer
+        self._control_surface = control_surface
+        ControlSurfaceComponent.__init__(self)
+        self.set_enabled(False)
+        self._buttons = buttons
+
+        self._buttons[0].add_value_listener(self.note_dec_button_value)
+        self._buttons[1].add_value_listener(self.note_inc_button_value)
+
+        self._key = 4
+        self._root_note = 36
+        self._offset = 0
+
+        self.is_drumrack = False
+
+        self._cache = [-1, -1, -1, -1,
+                       -1, -1, -1, -1,
+                       -1, -1, -1, -1,
+                       -1, -1, -1, -1]
+
+    def set_selected_note(self, selected_note):
+        if self.is_drumrack:
+            self._root_note = int((selected_note + 12) / 16 - 1) * 16 + 4
+            self._offset = (selected_note - self._root_note + 16) % 16
+        else:
+            self._root_note = int((selected_note - self._key) / 12) * 12 + self._key
+            self._offset = (selected_note + 12 - self._root_note) % 12
+
+    def set_enabled(self, enabled):
+        # if enabled:
+        #     self._cache = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+        ControlSurfaceComponent.set_enabled(self, enabled)
+
+    @property
+    def selected_note(self):
+        return self._root_note + self._offset
+
+    def note_dec_button_value(self, nv):
+        # self.set_selected_note(self.selected_note - 1)
+        self._offset = self._offset - 1
+        #self._step_sequencer._scale_updated()
+        self._step_sequencer.decrement_note()
+
+
+    def note_inc_button_value(self, nv):
+        # self.set_selected_note(self.selected_note + 1)
+        self._offset = self._offset + 1
+        self._control_surface.log_message(f"incrementing note: {nv}")
+        self._step_sequencer._scale_updated()
+
+    def set_clip(self, clip):
+        self._clip = clip
+
+    def set_note_cache(self, note_cache):
+        self._note_cache = note_cache
 
 
 class CKStepSequencerComponent(CompoundComponent):
@@ -98,6 +158,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._number_of_lines_per_note = 1
 
     def _set_lock_function(self):
+        self._control_surface.log_message("_set_lock_function")
         self._is_locked = False
         self._lock_to_track = False
         self._last_lock_button_press = time.time()
@@ -113,7 +174,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._is_mute_shifted = False
 
     def _set_quantization_function(self):
-        self._quantization_index = 2
+        self._quantization_index = 1
         self.set_quantization(QUANTIZATION_MAP[self._quantization_index])
         self._quantization_button = None
         self._last_quantize_button_press = time.time()
@@ -133,20 +194,26 @@ class CKStepSequencerComponent(CompoundComponent):
     #In charge of refreshing the notes LED matrix
     #Display page indicator for multinote mode
     def _set_note_editor(self):
-        self._note_editor = self.register_component(NoteEditorComponent(self, self._matrix, self._control_surface))
-        self._note_editor.set_velocity_button(self._side_buttons[6])#Solo
+        self._note_editor = self.register_component(CKNoteEditorComponent(self, self._matrix, self._control_surface))
+        # self._note_editor.set_velocity_button(self._side_buttons[6])#Solo
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
     def _set_note_selector(self):
-        self._note_selector = self.register_component(NoteSelectorComponent(self, [
-            self._matrix.get_button(0, 7), self._matrix.get_button(1, 7), self._matrix.get_button(2, 7), self._matrix.get_button(3, 7),
-            self._matrix.get_button(0, 6), self._matrix.get_button(1, 6), self._matrix.get_button(2, 6), self._matrix.get_button(3, 6),
-            self._matrix.get_button(0, 5), self._matrix.get_button(1, 5), self._matrix.get_button(2, 5), self._matrix.get_button(3, 5),
-            self._matrix.get_button(0, 4), self._matrix.get_button(1, 4), self._matrix.get_button(2, 4), self._matrix.get_button(3, 4)],
-                                                                            self._control_surface)
-                                                      )
-        self._note_selector.set_up_button(self._side_buttons[4])#Stop
-        self._note_selector.set_down_button(self._side_buttons[5])#Trk On
+        # self._note_selector = self.register_component(NoteSelectorComponent(self, [
+        #     self._matrix.get_button(0, 7), self._matrix.get_button(1, 7), self._matrix.get_button(2, 7), self._matrix.get_button(3, 7),
+        #     self._matrix.get_button(0, 6), self._matrix.get_button(1, 6), self._matrix.get_button(2, 6), self._matrix.get_button(3, 6),
+        #     self._matrix.get_button(0, 5), self._matrix.get_button(1, 5), self._matrix.get_button(2, 5), self._matrix.get_button(3, 5),
+        #     self._matrix.get_button(0, 4), self._matrix.get_button(1, 4), self._matrix.get_button(2, 4), self._matrix.get_button(3, 4)],
+        #                                                                     self._control_surface)
+        #                                               )
+        # self._note_selector.set_up_button(self._side_buttons[4])#Stop
+        # self._note_selector.set_down_button(self._side_buttons[5])#Trk On
+        self._control_surface.log_message(f"Creatined note selector")
+
+        self._note_selector = self.register_component(CKNoteSelectorComponent(self, [
+            self._matrix.get_button(0, 4),
+            self._matrix.get_button(1, 4),
+        ], self._control_surface))
 
     def _set_track_controller(self):#Navigation buttons
         self._track_controller = self.register_component(TrackControllerComponent(self._control_surface, implicit_arm = False))
@@ -258,12 +325,13 @@ class CKStepSequencerComponent(CompoundComponent):
             self._update_drum_group_device()
             if(self._drum_group_device): #Select the note
                 self._note_selector.set_selected_note(self.index_of(self._drum_group_device.drum_pads,self._drum_group_device.view.selected_drum_pad)) #FIX set view again
+                self._ck_note_selector.set_selected_note(self.index_of(self._drum_group_device.drum_pads,self._drum_group_device.view.selected_drum_pad)) #FIX set view again
 
             #load scale settings from clip
-            if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":  #????
-                self._scale_selector.from_object(self._clip)
-                self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
-                self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
+            # if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":  #????
+            #     self._scale_selector.from_object(self._clip)
+            #     self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
+            #     self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
 
             self._track_controller.set_enabled(enabled)
             self._note_editor.set_enabled(enabled)
@@ -313,40 +381,71 @@ class CKStepSequencerComponent(CompoundComponent):
 
     # SCALE
     def _scale_updated(self):
+        self._control_surface.log_message("scale updated")
         keys = [0, 0, 0, 0, 0, 0, 0, 0]
         key_is_root_note = [False, False, False, False, False, False, False, False]
         key_is_in_scale = [False, False, False, False, False, False, False, False]
-        if self._note_selector.is_drumrack:
-            for i in range(8):
-                keys[i] = self._note_selector.selected_note + i
-                key_is_root_note[i] = (keys[i] + 12 + 16) % 16 == 0
-                key_is_in_scale[i] = (keys[i] + 12 + 16) % 4 == 0
-        elif self._note_selector.is_diatonic:
-            self._note_selector._scale_length = len(self._note_selector._scale)
-            try:
-                idx = self._note_selector._scale.index(self._note_selector._offset)
-            except ValueError:
-                idx = -1
-            if(idx == -1):
-                self._control_surface.log_message("not found : " + str(self._note_selector._offset) + " in " + str(self._note_selector._scale))
-                for i in range(8):
-                    keys[i] = self._note_selector._root_note + self._note_selector._offset + i
-            else:
-                for i in range(8):
-                    keys[i] = self._note_selector._root_note + self._note_selector._scale[(i + idx) % self._note_selector._scale_length] + int((i + idx) / self._note_selector._scale_length) * 12
-                    key_is_root_note[i] = (keys[i] + 12) % 12 == self._note_selector._key
-                    key_is_in_scale[i] = True
-        else:
-            for i in range(8):
-                keys[i] = self._note_selector.selected_note + i
-                key_is_root_note[i] = (keys[i] + 12) % 12 == self._note_selector._key
-                key_is_in_scale[i] = (keys[i] - self._note_selector._key + 12) % 12 in self._note_selector._scale
+        # if self._note_selector.is_drumrack:
+        #     for i in range(8):
+        #         keys[i] = self._note_selector.selected_note + i
+        #         key_is_root_note[i] = (keys[i] + 12 + 16) % 16 == 0
+        #         key_is_in_scale[i] = (keys[i] + 12 + 16) % 4 == 0
+        # elif self._note_selector.is_diatonic:
+        #     self._note_selector._scale_length = len(self._note_selector._scale)
+        #     try:
+        #         idx = self._note_selector._scale.index(self._note_selector._offset)
+        #     except ValueError:
+        #         idx = -1
+        #     if(idx == -1):
+        #         self._control_surface.log_message("not found : " + str(self._note_selector._offset) + " in " + str(self._note_selector._scale))
+        #         for i in range(8):
+        #             keys[i] = self._note_selector._root_note + self._note_selector._offset + i
+        #     else:
+        #         for i in range(8):
+        #             keys[i] = self._note_selector._root_note + self._note_selector._scale[(i + idx) % self._note_selector._scale_length] + int((i + idx) / self._note_selector._scale_length) * 12
+        #             key_is_root_note[i] = (keys[i] + 12) % 12 == self._note_selector._key
+        #             key_is_in_scale[i] = True
+        # else:
+        #     for i in range(8):
+        #         keys[i] = self._note_selector.selected_note + i
+        #         key_is_root_note[i] = (keys[i] + 12) % 12 == self._note_selector._key
+        #         key_is_in_scale[i] = (keys[i] - self._note_selector._key + 12) % 12 in self._note_selector._scale
+        #
+
+        for i in range(8):
+            keys[i] = self._note_selector.selected_note + i
+            key_is_root_note[i] = (keys[i] + 12) % 12 == self._note_selector._key
+            key_is_in_scale[i] = True #(keys[i] - self._note_selector._key + 12) % 12 in self._note_selector._scale
+
+
 
         self._note_editor.set_key_indexes(keys)
         self._note_editor.set_key_index_is_in_scale(key_is_in_scale)
         self._note_editor.set_key_index_is_root_note(key_is_root_note)
         self._update_note_editor()
         self._update_note_selector()
+
+    def decrement_note(self):
+        self._control_surface.log_message(f"decrement note")
+
+        self._control_surface.log_message(f"decrement note. Clip: {self._clip}")
+        self._clip.select_all_notes()
+        notes = self._clip.get_selected_notes()
+        self._control_surface.log_message(f"decrement note. Clip: {len(notes)}")
+        self._clip.deselect_all_notes()
+        for note in notes:
+            self._control_surface.log_message(f"decrement note: {note}")
+
+        note_1 = notes[0]
+        pitch = note_1[0]
+
+        notes = [[pitch-1, note_1[1],note_1[2],note_1[3],note_1[4]]]
+
+        self._clip.select_all_notes()
+        self._control_surface.log_message(f"_matrix_value_message replacing notes")
+        self._clip.replace_selected_notes(tuple(notes))
+
+        self.update()
 
     # UPDATE
     def update(self):
@@ -377,11 +476,15 @@ class CKStepSequencerComponent(CompoundComponent):
         self._loop_selector.update()
 
     def _update_note_selector(self):
-        self._note_selector._enable_offset_button = self._mode == STEPSEQ_MODE_NORMAL
+        # pass
+        # self._note_selector._enable_offset_button = self._mode == STEPSEQ_MODE_NORMAL
         self._note_selector.set_enabled(self._mode != STEPSEQ_MODE_SCALE_EDIT)
         self._note_selector.update()
 
     def _update_note_editor(self):
+        self._control_surface.log_message(f"self._mode = {self._mode}")
+        self._control_surface.log_message(f"self._height = {self._height}")
+        self._control_surface.log_message(f"self._mode = {self._mode == STEPSEQ_MODE_NORMAL}")
         self._note_editor.set_multinote(self._mode == STEPSEQ_MODE_MULTINOTE, self._number_of_lines_per_note)
         if self._mode == STEPSEQ_MODE_NORMAL:
             self._note_editor.set_height(self._height - 4)
@@ -503,9 +606,9 @@ class CKStepSequencerComponent(CompoundComponent):
                     #must set clip to None otherwise it trigger a clip note update which we dont want.
                     self._clip = None
                     self._note_editor._clip = None
-                    self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
-                    #self._control_surface.schedule_message(1, self._note_selector.set_selected_note,(self._scale_selector,self._scale_selector._octave * 12 + self._scale_selector._key))
-                    self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
+                    # self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
+                    # self._control_surface.schedule_message(1, self._note_selector.set_selected_note,(self._scale_selector,self._scale_selector._octave * 12 + self._scale_selector._key))
+                    # self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
 
                 # link new clip
                 self._clip_slot.clip.add_notes_listener(self._on_notes_changed)
@@ -549,7 +652,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._note_selector.set_clip(self._clip)
         self._loop_selector.set_clip(self._clip)
         self._note_editor.set_playhead(None)
-        self._note_selector.set_playhead(None)
+        # self._note_selector.set_playhead(None)
         self._loop_selector.set_playhead(None)
         # reload notes
         self._on_notes_changed()
@@ -584,7 +687,7 @@ class CKStepSequencerComponent(CompoundComponent):
             else:
                 self._playhead = None
             self._loop_selector.set_playhead(self._playhead)
-            self._note_selector.set_playhead(self._playhead)
+            # self._note_selector.set_playhead(self._playhead)
             self._note_editor.set_playhead(self._playhead)
             self.updateQuantizationButton()
 
@@ -644,24 +747,25 @@ class CKStepSequencerComponent(CompoundComponent):
                 self._scale_selector_button.add_value_listener(self._scale_selector_button_value)
 
     def _scale_selector_button_value(self, value):
-        assert (value in range(128))
-        if self.is_enabled():
-
-            if value > 0:
-                self._mode_backup = self._mode
-                if self._scale_selector != None and self._note_selector != None:
-                    self._scale_selector.set_octave(int(self._note_selector._root_note / 12))
-                    self._scale_selector.set_key(self._note_selector._key)
-                    self.set_mode(STEPSEQ_MODE_SCALE_EDIT)
-            else:
-                if self._scale_selector != None and self._note_selector != None:
-                    self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
-                    self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
-                    self._scale_updated()
-                    #update clip name
-                    if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":
-                        self._scale_selector.update_object_name(self._clip)
-                self.set_mode(self._mode_backup)
+        # assert (value in range(128))
+        # if self.is_enabled():
+        #
+        #     if value > 0:
+        #         self._mode_backup = self._mode
+        #         if self._scale_selector != None and self._note_selector != None:
+        #             self._scale_selector.set_octave(int(self._note_selector._root_note / 12))
+        #             self._scale_selector.set_key(self._note_selector._key)
+        #             self.set_mode(STEPSEQ_MODE_SCALE_EDIT)
+        #     else:
+        #         if self._scale_selector != None and self._note_selector != None:
+        #             self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
+        #             self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
+        #             self._scale_updated()
+        #             #update clip name
+        #             if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":
+        #                 self._scale_selector.update_object_name(self._clip)
+        #         self.set_mode(self._mode_backup)
+        pass
 
 
     # MUTE SHIFT Button

@@ -4,6 +4,7 @@ from .StepSequencerComponent import StepSequencerComponent, ButtonElement, NoteS
 from .ScaleComponent import MUSICAL_MODES, KEY_NAMES
 from .TrackControllerComponent import TrackControllerComponent
 from random import randrange
+import logging
 import time
 
 STEPSEQ_MODE_NOTES = 1
