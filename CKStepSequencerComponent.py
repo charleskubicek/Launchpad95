@@ -41,6 +41,9 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
 
         self._buttons[2].add_value_listener(self.velocity_dec_button_value)
         self._buttons[3].add_value_listener(self.velocity_inc_button_value)
+        
+        self._buttons[4].add_value_listener(self.shift_left_button_value)
+        self._buttons[5].add_value_listener(self.shift_right_button_value)
 
         self._key = 4
         self._root_note = 36
@@ -88,6 +91,14 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
     def velocity_inc_button_value(self, value):
         if value != 0:
             self._step_sequencer.increment_velocity()
+            
+    def shift_left_button_value(self, v):
+        if v != 0:
+            self._step_sequencer.shift_clip_notes_left()
+            
+    def shift_right_button_value(self, v):
+        if v != 0:
+            self._step_sequencer.shift_clip_notes_right()
 
     def set_clip(self, clip):
         self._clip = clip
@@ -444,6 +455,12 @@ class CKStepSequencerComponent(CompoundComponent):
     def decrement_velocity(self):
         self._note_editor.decrement_selected_note_velocity()
         self.update()
+
+    def shift_clip_notes_left(self):
+        self._note_editor.shift_clip_notes_left()
+
+    def shift_clip_notes_right(self):
+        self._note_editor.shift_clip_notes_right()
 
     # UPDATE
     def update(self):

@@ -187,6 +187,20 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
         self._update_matrix()
 
+    def shift_clip_notes_right(self):
+        notes = self._clip.get_all_notes_extended()
+        for note in notes:
+            note.start_time = note.start_time + self._quantization
+
+        self._clip.apply_note_modifications(notes)
+
+    def shift_clip_notes_left(self):
+        notes = self._clip.get_all_notes_extended()
+        for note in notes:
+            note.start_time = note.start_time - self._quantization
+
+        self._clip.apply_note_modifications(notes)
+
     def update(self, force=False):
         self._control_surface.log_message(f"NE update. {self.is_enabled()}")
         if self.is_enabled():
