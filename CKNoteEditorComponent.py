@@ -35,6 +35,20 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         self._display_page = False
         self._display_page_time = time.time()
 
+        # modes
+        self._is_mute_shifted = False
+
+        # Velocity color map. this must remain of length 3. WHY???
+        self.velocity_map = [20, 50, 80, 105, 127]
+        self.velocity_color_map = ["StepSequencer.NoteEditor.Velocity0", "StepSequencer.NoteEditor.Velocity1",
+                                   "StepSequencer.NoteEditor.Velocity2", "StepSequencer.NoteEditor.Velocity3",
+                                   "StepSequencer.NoteEditor.Velocity4"]
+
+
+        self.selected_note = None
+        self.selected_note_xy = None
+        self.selected_note_color = "StepSequencer.NoteEditor.Playing"
+
         # matrix
         if matrix != None:
             self.set_matrix(matrix)
@@ -84,7 +98,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
     def set_height(self, height):
         self._control_surface.log_message(f"set height to = {height}")
-        self._height = height
+        self._height = min(height, 2)
 
     @property
     def width(self):
@@ -139,12 +153,25 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                 self._matrix.add_value_listener(self._matrix_value)
                 self._width = self._matrix.width()
                 # self._height = self._matrix.height()
-                self._grid_buffer = [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0],
-                                     [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0],
-                                     [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
-                self._grid_back_buffer = [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0],
-                                          [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0],
-                                          [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+                self._grid_buffer = [[0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0],
+                                     [0, 0, 0, 0, 0, 0, 0, 0]
+                                     ]
+
+                self._grid_back_buffer = [[0, 0, 0, 0, 0, 0, 0, 0],
+                                          [0, 0, 0, 0, 0, 0, 0, 0],
+                                          [0, 0, 0, 0, 0, 0, 0, 0],
+                                          [0, 0, 0, 0, 0, 0, 0, 0],
+                                          [0, 0, 0, 0, 0, 0, 0, 0],
+                                          [0, 0, 0, 0, 0, 0, 0, 0],
+                                          [0, 0, 0, 0, 0, 0, 0, 0],
+                                          [0, 0, 0, 0, 0, 0, 0, 0]
+                                          ]
 
     def _matrix_value(self, value, x, y, is_momentary):
         if self.is_enabled() and y < self.height:  # Height value can be 8 (MULTINOTE/SCALE_EDIT) or 4 (STEPSEQ_MODE_NORMAL)
@@ -154,14 +181,86 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
     # Add/Delete/Mute notes in the cache for PL light management and in the Live's Clip OK
     def _matrix_value_message(self, values):  # (value=127/0, x=idx, y=idx, is_momentary=True)
-        self._control_surface.log_message(f"_matrix_value_message. clip: {self._clip}, values: {values}")
-        return
+        self._control_surface.log_message(f"_matrix_value_message. clip: {self._clip}")
+        value = values[0]
+        x = values[1]
+        y = values[2]
+        is_momentary = values[3]
+        """(pitch, time, note_duration, velocity, mute state)"""
+        assert (self._matrix != None)
+        assert (value in range(128))
+        assert (x in range(self._matrix.width()))
+        assert (y in range(self._matrix.height()))
+        assert isinstance(is_momentary, type(False))
+
+        pitch = 60
+        velocity = 120
+        note_duration = 0.25
+
+        if self.is_enabled() and self._clip == None:
+            self._stepsequencer.create_clip()
+        elif self.is_enabled() and self._clip != None:
+            if value != 0 or not is_momentary:  # if NOTE_ON or button is toggle
+                # if (self._is_velocity_shifted):
+                #     self._velocity_notes_pressed = self._velocity_notes_pressed + 1  # Just changing some note velocity
+
+                # note data
+                time = self.quantization * (
+                        self._page * self.width * self.number_of_lines_per_note + y * self.width + x)
+                pitch = 60
+                velocity = 120
+                note_duration = 0.25  # setted by quantization button in StepSequencerComponent
+
+                # TODO: use new better way for editing clip
+
+        self._clip.select_all_notes()
+        note_cache = self._clip.get_selected_notes()
+        if self._note_cache != note_cache:
+            self._note_cache = note_cache
+
+        note_cache = list(self._note_cache)
+        self._control_surface.log_message(f"_matrix_value_message note cache len: {len(note_cache)}")
+
+        for note in note_cache:
+            if pitch == note[0] and time == note[1]:
+                self._control_surface.log_message(f"self.selected_note = {self.selected_note}")
+                self._control_surface.log_message(f"self.        _note = {note}")
+                if self.selected_note is not None and self.selected_note[1] == note[1]:
+                    self.selected_note = None
+                    self.selected_note_xy = None
+                elif self.selected_note is None:
+                    self.selected_note = note
+                    self.selected_note_xy = x, y
+
+                break
+        else:
+            new_note = [pitch, time, note_duration, velocity,
+                        self._is_mute_shifted]
+            note_cache.append(new_note)  # (pitch, time, note_duration, velocity, mute state)
+
+            self.selected_note = new_note
+            self.selected_note_xy = (x, y)
+
+        # Added CK to ensure selected button is added
+        self._update_matrix()
+
+        self._control_surface.log_message(f"self.selected_note at end       = {self.selected_note}")
+        self._clip.select_all_notes()
+        # self._control_surface.log_message(f"_matrix_value_message replacing notes")
+        # for n in note_cache:
+        #     self._control_surface.log_message(f"]n = {n}")
+        self._clip.replace_selected_notes(tuple(note_cache))
+
+        note_cache = self._clip.get_selected_notes()
+        if self._note_cache != note_cache:
+            self._note_cache = note_cache
+
+
 
     def _update_matrix(self):
-        self._control_surface.log_message(
-            f"CK NE update_matrix. {self.is_enabled()}, {self._matrix}, clip:{self._clip}, _note_cache: {self._note_cache}")
+        # self._control_surface.log_message(f"CK NE update_matrix. {self.is_enabled()}, {self._matrix}, clip:{self._clip}, _note_cache: {self._note_cache}")
         if self.is_enabled() and self._matrix != None:
-
+            self._control_surface.log_message(f"update matrix self.height = {self.height}")
             # clear back buffer
             for x in range(self.width):
                 for y in range(self.height):
@@ -209,10 +308,10 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     note_velocity = note[3]  # velocity: 0-127 value #
                     note_muted = note[4]  # Boolean
 
-                    self._control_surface.log_message(f"note = {note}")
-                    self._control_surface.log_message(f"self.width/height = {self.width}/{self.height}")
-                    self._control_surface.log_message(f"self.number_of_lines_per_note = {self.number_of_lines_per_note}")
-                    self._control_surface.log_message(f"self.quantization = {self.quantization}")
+                    # self._control_surface.log_message(f"note = {note}")
+                    # self._control_surface.log_message(f"self.width/height = {self.width}/{self.height}")
+                    # self._control_surface.log_message(f"self.number_of_lines_per_note = {self.number_of_lines_per_note}")
+                    # self._control_surface.log_message(f"self.quantization = {self.quantization}")
 
                     note_page = int(note_position / self.quantization / self.width / self.number_of_lines_per_note)
                     note_grid_x_position = int(note_position / self.quantization) % self.width
@@ -226,9 +325,21 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     #1.5 = 6
                     #1.75 = 7
 
-                    self._control_surface.log_message(f"note_page = {note_page}")
-                    self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
-                    self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
+                    # self._control_surface.log_message(f"note_page = {note_page}")
+                    # self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
+                    # self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
+
+                    velocity_color = self.velocity_color_map[0]
+                    for index in range(len(self.velocity_map)):
+                        if note_velocity >= self.velocity_map[index]:
+                            velocity_color = self.velocity_color_map[index]
+
+
+                    self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
+
+                    self._control_surface.log_message(f"_update self.selected_note = {self.selected_note}")
+                    if self.selected_note is not None and self.selected_note[1] == note[1]:
+                        self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.selected_note_color
 
                     # Calculate note position in the grid (note position to matrix button logic)
                     # if self.is_multinote:
@@ -306,4 +417,4 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     if self._grid_back_buffer[x][y] != self._grid_buffer[x][y] or self._force_update:
                         self._grid_buffer[x][y] = self._grid_back_buffer[x][y]
                         self._matrix.get_button(x, y).set_light(self._grid_buffer[x][y])
-            # self._force_update = False
+            self._force_update = False
