@@ -143,10 +143,18 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
             self._update_matrix()
 
     def decrement_selected_note(self):
-        pass
+        if self.selected_note is not None:
+            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+            notes[0].pitch = notes[0].pitch-1
+            self._clip.apply_note_modifications(notes)
+            self._update_matrix()
 
     def increment_selected_note(self):
-        pass
+        if self.selected_note is not None:
+            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+            notes[0].pitch = notes[0].pitch+1
+            self._clip.apply_note_modifications(notes)
+            self._update_matrix()
 
     def update(self, force=False):
         self._control_surface.log_message(f"NE update. {self.is_enabled()}")
@@ -229,11 +237,13 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         all_notes = self._clip.get_all_notes_extended()
         for note in all_notes:
             if note.pitch == pitch and start_time == note.start_time: # Exists
-                self._control_surface.log_message(f"self.selected_note.note_id = {self.selected_note.note_id}, this id: {note.note_id}")
                 if self.selected_note is not None and self.selected_note.note_id == note.note_id:
+                    self._control_surface.log_message(f"self.selected_note.note_id = {self.selected_note.note_id}, this id: {note.note_id}")
                     self.selected_note = None
+                elif self.selected_note is not None and self.selected_note.note_id != note.note_id:
+                    self.selected_note = SelectedNote((x, y), note.note_id)
                 elif self.selected_note is None:
-                    self.selected_note = SelectedNote((x, y), note)
+                    self.selected_note = SelectedNote((x, y), note.note_id)
                 break
         else:
 
@@ -241,16 +251,9 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                                                    start_time=start_time,
                                                    duration=note_duration,
                                                    velocity=velocity)
-            # note_cache.append(new_note)  # (pitch, time, note_duration, velocity, mute state)
+
             new_note_id = self._clip.add_new_notes([new_note])[0]
             self.selected_note = SelectedNote((x, y), new_note_id)
-
-
-
-        # self._clip.select_all_notes()
-        # note_cache = self._clip.get_selected_notes()
-        # if self._note_cache != note_cache:
-        #     self._note_cache = note_cache
 
 
         # self._clip.get_all_notes_extended()
@@ -281,16 +284,6 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         self._update_matrix()
 
         self._control_surface.log_message(f"self.selected_note at end       = {self.selected_note}")
-        # self._clip.select_all_notes()
-        # self._control_surface.log_message(f"_matrix_value_message replacing notes")
-        # for n in note_cache:
-        #     self._control_surface.log_message(f"]n = {n}")
-        # self._clip.replace_selected_notes(tuple(note_cache))
-
-        # note_cache = self._clip.get_selected_notes()
-        # if self._note_cache != note_cache:
-        #     self._note_cache = note_cache
-
 
 
     def _update_matrix(self):

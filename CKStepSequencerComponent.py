@@ -67,18 +67,14 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
     def selected_note(self):
         return self._root_note + self._offset
 
-    def note_dec_button_value(self, nv):
-        # self.set_selected_note(self.selected_note - 1)
-        self._offset = self._offset - 1
-        #self._step_sequencer._scale_updated()
-        self._step_sequencer.decrement_note()
+    def note_dec_button_value(self, value):
+        if value != 0:
+            self._step_sequencer.decrement_note()
 
 
-    def note_inc_button_value(self, nv):
-        # self.set_selected_note(self.selected_note + 1)
-        self._offset = self._offset + 1
-        self._control_surface.log_message(f"incrementing note: {nv}")
-        self._step_sequencer._scale_updated()
+    def note_inc_button_value(self, value):
+        if value != 0:
+            self._step_sequencer.increment_note()
 
     def set_clip(self, clip):
         self._clip = clip
@@ -420,28 +416,14 @@ class CKStepSequencerComponent(CompoundComponent):
         self._update_note_editor()
         self._update_note_selector()
 
+    def increment_note(self):
+        self._control_surface.log_message(f"decrement note")
+        self._note_editor.increment_selected_note()
+
+        self.update()
     def decrement_note(self):
         self._control_surface.log_message(f"decrement note")
-
-        self._control_surface.log_message(f"decrement note. Clip: {self._clip}")
-
         self._note_editor.decrement_selected_note()
-        # self._clip.select_all_notes()
-        # notes = self._clip.get_selected_notes()
-        # self._control_surface.log_message(f"decrement note. Clip: {len(notes)}")
-        # self._clip.deselect_all_notes()
-        #
-        # for note in notes:
-        #     self._control_surface.log_message(f"decrement note: {note}")
-        #
-        # note_1 = notes[0]
-        # pitch = note_1[0]
-        #
-        # notes = [[pitch-1, note_1[1],note_1[2],note_1[3],note_1[4]]]
-        #
-        # self._clip.select_all_notes()
-        # self._control_surface.log_message(f"_matrix_value_message replacing notes")
-        # self._clip.replace_selected_notes(tuple(notes))
 
         self.update()
 
