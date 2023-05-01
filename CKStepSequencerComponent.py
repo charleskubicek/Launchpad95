@@ -199,21 +199,16 @@ class CKStepSequencerComponent(CompoundComponent):
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
     def _set_note_selector(self):
-        # self._note_selector = self.register_component(NoteSelectorComponent(self, [
-        #     self._matrix.get_button(0, 7), self._matrix.get_button(1, 7), self._matrix.get_button(2, 7), self._matrix.get_button(3, 7),
-        #     self._matrix.get_button(0, 6), self._matrix.get_button(1, 6), self._matrix.get_button(2, 6), self._matrix.get_button(3, 6),
-        #     self._matrix.get_button(0, 5), self._matrix.get_button(1, 5), self._matrix.get_button(2, 5), self._matrix.get_button(3, 5),
-        #     self._matrix.get_button(0, 4), self._matrix.get_button(1, 4), self._matrix.get_button(2, 4), self._matrix.get_button(3, 4)],
-        #                                                                     self._control_surface)
-        #                                               )
         # self._note_selector.set_up_button(self._side_buttons[4])#Stop
         # self._note_selector.set_down_button(self._side_buttons[5])#Trk On
-        self._control_surface.log_message(f"Creatined note selector")
 
         self._note_selector = self.register_component(CKNoteSelectorComponent(self, [
-            self._matrix.get_button(0, 4),
-            self._matrix.get_button(1, 4),
+                self._matrix.get_button(0, 4), self._matrix.get_button(1, 4), self._matrix.get_button(2, 4), self._matrix.get_button(3, 4),
+                self._matrix.get_button(0, 5), self._matrix.get_button(1, 5), self._matrix.get_button(2, 5), self._matrix.get_button(3, 5),
+                self._matrix.get_button(0, 6), self._matrix.get_button(1, 6), self._matrix.get_button(2, 6), self._matrix.get_button(3, 6),
+                self._matrix.get_button(0, 7), self._matrix.get_button(1, 7), self._matrix.get_button(2, 7), self._matrix.get_button(3, 7),
         ], self._control_surface))
+
 
     def _set_track_controller(self):#Navigation buttons
         self._track_controller = self.register_component(TrackControllerComponent(self._control_surface, implicit_arm = False))
@@ -429,21 +424,24 @@ class CKStepSequencerComponent(CompoundComponent):
         self._control_surface.log_message(f"decrement note")
 
         self._control_surface.log_message(f"decrement note. Clip: {self._clip}")
-        self._clip.select_all_notes()
-        notes = self._clip.get_selected_notes()
-        self._control_surface.log_message(f"decrement note. Clip: {len(notes)}")
-        self._clip.deselect_all_notes()
-        for note in notes:
-            self._control_surface.log_message(f"decrement note: {note}")
 
-        note_1 = notes[0]
-        pitch = note_1[0]
-
-        notes = [[pitch-1, note_1[1],note_1[2],note_1[3],note_1[4]]]
-
-        self._clip.select_all_notes()
-        self._control_surface.log_message(f"_matrix_value_message replacing notes")
-        self._clip.replace_selected_notes(tuple(notes))
+        self._note_editor.decrement_selected_note()
+        # self._clip.select_all_notes()
+        # notes = self._clip.get_selected_notes()
+        # self._control_surface.log_message(f"decrement note. Clip: {len(notes)}")
+        # self._clip.deselect_all_notes()
+        #
+        # for note in notes:
+        #     self._control_surface.log_message(f"decrement note: {note}")
+        #
+        # note_1 = notes[0]
+        # pitch = note_1[0]
+        #
+        # notes = [[pitch-1, note_1[1],note_1[2],note_1[3],note_1[4]]]
+        #
+        # self._clip.select_all_notes()
+        # self._control_surface.log_message(f"_matrix_value_message replacing notes")
+        # self._clip.replace_selected_notes(tuple(notes))
 
         self.update()
 
@@ -487,7 +485,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._control_surface.log_message(f"self._mode = {self._mode == STEPSEQ_MODE_NORMAL}")
         self._note_editor.set_multinote(self._mode == STEPSEQ_MODE_MULTINOTE, self._number_of_lines_per_note)
         if self._mode == STEPSEQ_MODE_NORMAL:
-            self._note_editor.set_height(self._height - 6)
+            self._note_editor.set_height(self._height - 4)
         else:
             self._note_editor.set_height(self._height)
         self._note_editor.set_enabled(self._mode != STEPSEQ_MODE_SCALE_EDIT)

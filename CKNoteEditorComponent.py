@@ -1,7 +1,14 @@
+from dataclasses import dataclass
+
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.ButtonElement import ButtonElement
 import time
+import Live
 
+@dataclass
+class SelectedNote:
+    x_y:(int, int)
+    note_id:int
 
 class CKNoteEditorComponent(ControlSurfaceComponent):
 
@@ -11,7 +18,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         self._control_surface = control_surface
         self.set_enabled(False)
         self._clip = None
-        self._note_cache = None
+        # self._note_cache = None
         self._playhead = None
 
         # buttons
@@ -46,7 +53,6 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
 
         self.selected_note = None
-        self.selected_note_xy = None
         self.selected_note_color = "StepSequencer.NoteEditor.Playing"
 
         # matrix
@@ -98,7 +104,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
     def set_height(self, height):
         self._control_surface.log_message(f"set height to = {height}")
-        self._height = min(height, 2)
+        self._height = min(height, 4)
 
     @property
     def width(self):
@@ -120,7 +126,8 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         self._clip = clip
 
     def set_note_cache(self, note_cache):
-        self._note_cache = note_cache
+        # self._note_cache = note_cache
+        pass
 
     def set_playhead(self, playhead):  # Playing cursor
         self._playhead = playhead
@@ -128,13 +135,18 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
     def update_notes(self):  # Deprecated ???
         if self._clip != None:
-            self._clip.select_all_notes()
-            note_cache = self._clip.get_selected_notes()
-            self._clip.deselect_all_notes()
-            if self._clip_notes != note_cache:
-                self._clip_notes = note_cache
-        self._update_matrix()
+            # self._clip.select_all_notes()
+            # note_cache = self._clip.get_selected_notes()
+            # self._clip.deselect_all_notes()
+            # if self._clip_notes != note_cache:
+            #     self._clip_notes = note_cache
+            self._update_matrix()
 
+    def decrement_selected_note(self):
+        pass
+
+    def increment_selected_note(self):
+        pass
 
     def update(self, force=False):
         self._control_surface.log_message(f"NE update. {self.is_enabled()}")
@@ -196,6 +208,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         pitch = 60
         velocity = 120
         note_duration = 0.25
+        start_time = 0
 
         if self.is_enabled() and self._clip == None:
             self._stepsequencer.create_clip()
@@ -205,55 +218,78 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                 #     self._velocity_notes_pressed = self._velocity_notes_pressed + 1  # Just changing some note velocity
 
                 # note data
-                time = self.quantization * (
+                start_time = self.quantization * (
                         self._page * self.width * self.number_of_lines_per_note + y * self.width + x)
                 pitch = 60
-                velocity = 120
+                velocity = 127
                 note_duration = 0.25  # setted by quantization button in StepSequencerComponent
 
                 # TODO: use new better way for editing clip
 
-        self._clip.select_all_notes()
-        note_cache = self._clip.get_selected_notes()
-        if self._note_cache != note_cache:
-            self._note_cache = note_cache
-
-        note_cache = list(self._note_cache)
-        self._control_surface.log_message(f"_matrix_value_message note cache len: {len(note_cache)}")
-
-        for note in note_cache:
-            if pitch == note[0] and time == note[1]:
-                self._control_surface.log_message(f"self.selected_note = {self.selected_note}")
-                self._control_surface.log_message(f"self.        _note = {note}")
-                if self.selected_note is not None and self.selected_note[1] == note[1]:
+        all_notes = self._clip.get_all_notes_extended()
+        for note in all_notes:
+            if note.pitch == pitch and start_time == note.start_time: # Exists
+                self._control_surface.log_message(f"self.selected_note.note_id = {self.selected_note.note_id}, this id: {note.note_id}")
+                if self.selected_note is not None and self.selected_note.note_id == note.note_id:
                     self.selected_note = None
-                    self.selected_note_xy = None
                 elif self.selected_note is None:
-                    self.selected_note = note
-                    self.selected_note_xy = x, y
-
+                    self.selected_note = SelectedNote((x, y), note)
                 break
         else:
-            new_note = [pitch, time, note_duration, velocity,
-                        self._is_mute_shifted]
-            note_cache.append(new_note)  # (pitch, time, note_duration, velocity, mute state)
 
-            self.selected_note = new_note
-            self.selected_note_xy = (x, y)
+            new_note = Live.Clip.MidiNoteSpecification(pitch=pitch,
+                                                   start_time=start_time,
+                                                   duration=note_duration,
+                                                   velocity=velocity)
+            # note_cache.append(new_note)  # (pitch, time, note_duration, velocity, mute state)
+            new_note_id = self._clip.add_new_notes([new_note])[0]
+            self.selected_note = SelectedNote((x, y), new_note_id)
+
+
+
+        # self._clip.select_all_notes()
+        # note_cache = self._clip.get_selected_notes()
+        # if self._note_cache != note_cache:
+        #     self._note_cache = note_cache
+
+
+        # self._clip.get_all_notes_extended()
+        #
+        # note_cache = list(self._note_cache)
+        # self._control_surface.log_message(f"_matrix_value_message note cache len: {len(note_cache)}")
+        #
+        # for note in note_cache:
+        #     if pitch == note[0] and time == note[1]:
+        #         self._control_surface.log_message(f"self.selected_note = {self.selected_note}")
+        #         self._control_surface.log_message(f"self.        _note = {note}")
+        #         if self.selected_note is not None and self.selected_note[1] == note[1]:
+        #             self.selected_note = None
+        #         elif self.selected_note is None:
+        #             self.selected_note = note
+        #             self.selected_note_xy = x, y
+        #
+        #         break
+        # else:
+        #     new_note = [pitch, time, note_duration, velocity,
+        #                 self._is_mute_shifted]
+        #     note_cache.append(new_note)  # (pitch, time, note_duration, velocity, mute state)
+        #
+        #     self.selected_note = new_note
+        #     self.selected_note_xy = (x, y)
 
         # Added CK to ensure selected button is added
         self._update_matrix()
 
         self._control_surface.log_message(f"self.selected_note at end       = {self.selected_note}")
-        self._clip.select_all_notes()
+        # self._clip.select_all_notes()
         # self._control_surface.log_message(f"_matrix_value_message replacing notes")
         # for n in note_cache:
         #     self._control_surface.log_message(f"]n = {n}")
-        self._clip.replace_selected_notes(tuple(note_cache))
+        # self._clip.replace_selected_notes(tuple(note_cache))
 
-        note_cache = self._clip.get_selected_notes()
-        if self._note_cache != note_cache:
-            self._note_cache = note_cache
+        # note_cache = self._clip.get_selected_notes()
+        # if self._note_cache != note_cache:
+        #     self._note_cache = note_cache
 
 
 
@@ -267,7 +303,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     self._grid_back_buffer[x][y] = "DefaultButton.Disabled"
 
             # update back buffer
-            if self._clip != None and self._note_cache != None:
+            if self._clip != None:# and self._note_cache != None:
 
                 # play back position
                 if self._playhead != None:
@@ -302,11 +338,10 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                 #         self._display_current_page()
 
                 # display clip notes
-                for note in self._note_cache:
-                    note_position = note[1]  # decimal value of a beat (1=beat, same as playhead)
-                    note_key = note[0]  # key: 0-127 MIDI note #
-                    note_velocity = note[3]  # velocity: 0-127 value #
-                    note_muted = note[4]  # Boolean
+                for note in self._clip.get_all_notes_extended(): #self._note_cache:
+                    note_position = note.start_time # note[1]  # decimal value of a beat (1=beat, same as playhead)
+                    note_key = note.pitch  #note[0]  # key: 0-127 MIDI note #
+                    note_velocity =  note.velocity #note[3]  # velocity: 0-127 value #
 
                     # self._control_surface.log_message(f"note = {note}")
                     # self._control_surface.log_message(f"self.width/height = {self.width}/{self.height}")
@@ -338,7 +373,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
 
                     self._control_surface.log_message(f"_update self.selected_note = {self.selected_note}")
-                    if self.selected_note is not None and self.selected_note[1] == note[1]:
+                    if self.selected_note is not None and self.selected_note.note_id == note.note_id:
                         self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.selected_note_color
 
                     # Calculate note position in the grid (note position to matrix button logic)
