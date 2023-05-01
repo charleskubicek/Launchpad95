@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from random import randrange
 
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.ButtonElement import ButtonElement
@@ -198,6 +199,20 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         notes = self._clip.get_all_notes_extended()
         for note in notes:
             note.start_time = note.start_time - self._quantization
+
+        self._clip.apply_note_modifications(notes)
+
+    def randomise_notes(self):
+        notes = self._clip.get_all_notes_extended()
+        for note in notes:
+            note.pitch = randrange(60-12, 60+12)
+
+        self._clip.apply_note_modifications(notes)
+
+    def randomise_velocities(self):
+        notes = self._clip.get_all_notes_extended()
+        for note in notes:
+            note.velocity = randrange(20, 127)
 
         self._clip.apply_note_modifications(notes)
 

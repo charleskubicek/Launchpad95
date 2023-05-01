@@ -45,6 +45,12 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
         self._buttons[4].add_value_listener(self.shift_left_button_value)
         self._buttons[5].add_value_listener(self.shift_right_button_value)
 
+        self._buttons[6].add_value_listener(self.shift_left_button_value)
+        self._buttons[7].add_value_listener(self.shift_right_button_value)
+
+        self._buttons[8].add_value_listener(self.random_note_button_value)
+        self._buttons[9].add_value_listener(self.random_velocity_button_value)
+
         self._key = 4
         self._root_note = 36
         self._offset = 0
@@ -99,6 +105,17 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
     def shift_right_button_value(self, v):
         if v != 0:
             self._step_sequencer.shift_clip_notes_right()
+
+    def random_note_button_value(self, v):
+        if v != 0:
+            self._step_sequencer.randomise_notes()
+
+
+    def random_velocity_button_value(self, v):
+        if v != 0:
+            self._step_sequencer.randomise_velocities()
+
+
 
     def set_clip(self, clip):
         self._clip = clip
@@ -461,6 +478,13 @@ class CKStepSequencerComponent(CompoundComponent):
 
     def shift_clip_notes_right(self):
         self._note_editor.shift_clip_notes_right()
+
+
+    def randomise_notes(self):
+        self._note_editor.randomise_notes()
+
+    def randomise_velocities(self):
+        self._note_editor.randomise_velocities()
 
     # UPDATE
     def update(self):
