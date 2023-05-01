@@ -135,13 +135,29 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         self._update_matrix()
 
     def update_notes(self):  # Deprecated ???
-        if self._clip != None:
-            # self._clip.select_all_notes()
-            # note_cache = self._clip.get_selected_notes()
-            # self._clip.deselect_all_notes()
-            # if self._clip_notes != note_cache:
-            #     self._clip_notes = note_cache
+        if self._clip is not None:
             self._update_matrix()
+
+
+    def increment_selected_note_velocity(self):
+        if self.selected_note is not None:
+            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+            if notes[0].velocity <117:
+                notes[0].velocity = notes[0].velocity + 10
+            else:
+                notes[0].velocity = 127
+
+            self._clip.apply_note_modifications(notes)
+
+    def decrement_selected_note_velocity(self):
+        if self.selected_note is not None:
+            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+            if notes[0].velocity > 10:
+                notes[0].velocity = notes[0].velocity - 10
+            else:
+                notes[0].velocity = 0
+
+            self._clip.apply_note_modifications(notes)
 
     def decrement_selected_note(self):
         if self.selected_note is not None:
