@@ -10,6 +10,7 @@ class SelectedNote:
     x_y:(int, int)
     note_id:int
 
+# Single notes only!
 class CKNoteEditorComponent(ControlSurfaceComponent):
 
     def __init__(self, stepsequencer=None, matrix=None, control_surface=None):
@@ -147,14 +148,28 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
             notes = self._clip.get_notes_by_id([self.selected_note.note_id])
             notes[0].pitch = notes[0].pitch-1
             self._clip.apply_note_modifications(notes)
-            self._update_matrix()
+        else:
+            notes = self._clip.get_all_notes_extended()
+            for note in notes:
+                note.pitch = note.pitch-1
+
+            self._clip.apply_note_modifications(notes)
+
+        self._update_matrix()
 
     def increment_selected_note(self):
         if self.selected_note is not None:
             notes = self._clip.get_notes_by_id([self.selected_note.note_id])
             notes[0].pitch = notes[0].pitch+1
             self._clip.apply_note_modifications(notes)
-            self._update_matrix()
+        else:
+            notes = self._clip.get_all_notes_extended()
+            for note in notes:
+                note.pitch = note.pitch+1
+
+            self._clip.apply_note_modifications(notes)
+
+        self._update_matrix()
 
     def update(self, force=False):
         self._control_surface.log_message(f"NE update. {self.is_enabled()}")
@@ -235,8 +250,11 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                 # TODO: use new better way for editing clip
 
         all_notes = self._clip.get_all_notes_extended()
+
+
         for note in all_notes:
-            if note.pitch == pitch and start_time == note.start_time: # Exists
+
+            if start_time == note.start_time: # Exists
                 if self.selected_note is not None and self.selected_note.note_id == note.note_id:
                     self._control_surface.log_message(f"self.selected_note.note_id = {self.selected_note.note_id}, this id: {note.note_id}")
                     self.selected_note = None
@@ -246,7 +264,6 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     self.selected_note = SelectedNote((x, y), note.note_id)
                 break
         else:
-
             new_note = Live.Clip.MidiNoteSpecification(pitch=pitch,
                                                    start_time=start_time,
                                                    duration=note_duration,
