@@ -51,6 +51,9 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
         self._buttons[8].add_value_listener(self.random_note_button_value)
         self._buttons[9].add_value_listener(self.random_velocity_button_value)
 
+        self._buttons[10].add_value_listener(self.half_clip_size_button_value)
+        self._buttons[11].add_value_listener(self.duplicate_clip_button_value)
+
         self._key = 4
         self._root_note = 36
         self._offset = 0
@@ -115,7 +118,13 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
         if v != 0:
             self._step_sequencer.randomise_velocities()
 
+    def half_clip_size_button_value(self, v):
+        if v != 0:
+            self._step_sequencer.half_clip_size()
 
+    def duplicate_clip_button_value(self, v):
+        if v != 0:
+            self._step_sequencer.double_or_duplicate_clip()
 
     def set_clip(self, clip):
         self._clip = clip
@@ -485,6 +494,12 @@ class CKStepSequencerComponent(CompoundComponent):
 
     def randomise_velocities(self):
         self._note_editor.randomise_velocities()
+
+    def half_clip_size(self):
+        self._note_editor.half_clip_size()
+
+    def double_or_duplicate_clip(self):
+        self._note_editor.double_or_duplicate_clip()
 
     # UPDATE
     def update(self):

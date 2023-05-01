@@ -216,6 +216,23 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
         self._clip.apply_note_modifications(notes)
 
+    def half_clip_size(self):
+        self._clip.end_marker = self._clip.end_marker / 2
+        self._clip.loop_end = self._clip.loop_end / 2
+
+    def double_or_duplicate_clip(self):
+        notes = self._clip.get_all_notes_extended()
+        furthest_end_time = 0
+        for note in notes:
+            if furthest_end_time < note.start_time + note.duration:
+                furthest_end_time = note.start_time + note.duration
+
+        if furthest_end_time <= self._clip.end_marker:
+            self._clip.duplicate_loop()
+        else:
+            self._clip.end_marker = self._clip.end_marker * 2
+            self._clip.loop_end = self._clip.loop_end * 2
+
     def update(self, force=False):
         self._control_surface.log_message(f"NE update. {self.is_enabled()}")
         if self.is_enabled():
