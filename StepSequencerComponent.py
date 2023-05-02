@@ -429,7 +429,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
         self._loop_end = 0
         self._loop_start = 0
 
-        self._blocksize = 8  # number of notes per block -> how many steps are in a button (depending on quantization for note length variable)
+        self._blocksize = 32 #CK was 8  # number of notes per block -> how many steps are in a button (depending on quantization for note length variable)
         self._block = 0  # currently selected block (button)
         self._force = True # used to force a state change / message send
 
@@ -532,9 +532,13 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                     self._loop_point1 = idx
                 elif self._loop_point2 == -1:
                     self._loop_point2 = idx
-        
+
             #Button released
-            elif self._loop_point1 != -1: 
+            elif self._loop_point1 != -1:
+                # 1=0, 2=-1 on release
+                self._control_surface.log_message(f"self._loop_point1 = {self._loop_point1}")
+                self._control_surface.log_message(f"self._loop_point2 = {self._loop_point2}")
+
                 setloop = self._loop_point2 != -1 # two buttons pressed
                 if self._loop_point2 == -1:
                     self._loop_point2 = idx # _loop_point1 = _loop_point2 
@@ -588,6 +592,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
     # Iterates refreshing all loop selector buttons (called from playing position listener) OK
     def update(self):
         if self.is_enabled():
+
             self._get_clip_loop() # gets the loop start/end values from the clip -> self._loop_start & self._loop_end
             i = 0
             for button in self._buttons: # iterate 16 buttons of 4x4 lower right matrix section
@@ -603,6 +608,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                     playing = self._playhead != None and self._playhead >= i * self._blocksize * self._quantization and self._playhead < (i + 1) * self._blocksize * self._quantization
                     #is this block selected (green)
                     selected = i == self.block
+
                     if in_loop:
                         if playing:
                             if selected:

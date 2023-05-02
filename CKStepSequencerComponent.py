@@ -82,25 +82,11 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
             self._offset = (selected_note + 12 - self._root_note) % 12
 
     def set_enabled(self, enabled):
-        # if enabled:
-            # self._buttons[0].set_enabled(True)
-            # self._buttons[0].set_light("QuickScale.Quant.Mode")
-            # self._buttons[0].send_value(127)
-            # self._buttons[0].set_on_off_values("StepSequencer.NoteSelector.Selected", "Note.Pads.Root")
-            # self._buttons[0].set_enabled(True)
-            # self._buttons[0].turn_on()
-        # if enabled:
-        #     self._cache = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
         ControlSurfaceComponent.set_enabled(self, enabled)
-        #
-        # self._buttons[0].set_light("StepSequencer.Quantization.One")
-        # self._buttons[1].set_light("QuickScale.Quant.Mode")
+
 
     def update(self):
         if self.is_enabled():
-            self._buttons[0].set_on_off_values("StepSequencer.NoteSelector.Selected", "Note.Pads.Root")
-            self._buttons[0].set_enabled(True)
-            self._buttons[0].turn_on()
             self._buttons[0].send_value(colour_amber_low)
             self._buttons[1].send_value(colour_yellow)
             self._buttons[2].send_value(colour_green_low)
@@ -109,6 +95,8 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
             self._buttons[5].send_value(colour_yellow)
             self._buttons[6].send_value(colour_red_low)
             self._buttons[7].send_value(colour_red_full)
+            self._buttons[8].send_value(colour_amber_low)
+            self._buttons[9].send_value(colour_yellow)
             self._buttons[12].send_value(colour_red_full)
 
 
@@ -262,7 +250,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._is_mute_shifted = False
 
     def _set_quantization_function(self):
-        self._quantization_index = 1
+        self._quantization_index = 2
         self.set_quantization(QUANTIZATION_MAP[self._quantization_index])
         self._quantization_button = None
         self._last_quantize_button_press = time.time()

@@ -113,12 +113,15 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         return self.height
 
     def set_page(self, page):
+        #CK
 
         # if self.is_multinote:
         #     self._page = page
         # else:
         #     self._page = int(page / 4)  # 4 lines per note (32 steps seq)
-        self._page = int(page / 4)  # 4 lines per note (32 steps seq)
+        # self._page = int(page / 4)  # 4 lines per note (32 steps seq)
+        self._page = page
+        self._control_surface.log_message(f"set_page page = {page} ({self._page})")
 
     def set_clip(self, clip):
         self._clip = clip
@@ -300,8 +303,16 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         elif self.is_enabled() and self._clip != None:
             if value != 0 or not is_momentary:  # if NOTE_ON or button is toggle
                 # note data
+                # self._control_surface.log_message(
+                #     f"q * (p * w * nlp + y * w + x) = {self.quantization} * ({self._page} * {self.width} * {self.number_of_lines_per_note} + {y} * {self.width} + {x})")
+                # self._control_surface.log_message(
+                #     f"q * (p * w * nlp + y * w + x) = {self.quantization} * ({self._page * self.width * self.number_of_lines_per_note} + {y * self.width} + {x})")
+                # self._control_surface.log_message(
+                #     f"q * (p * w * nlp + y * w + x) = {self.quantization} * ({self._page * self.width * self.number_of_lines_per_note + y * self.width + x})")
+
                 start_time = self.quantization * (
                         self._page * self.width * self.number_of_lines_per_note + y * self.width + x)
+                self._control_surface.log_message(f"start_time: {start_time}")
                 pitch = 60
                 velocity = 127
                 note_duration = 0.25  # setted by quantization button in StepSequencerComponent
@@ -331,7 +342,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                                                    duration=note_duration,
                                                    velocity=velocity)
 
-            new_note_id = self._clip.add_new_notes([new_note])[0]
+            self.new_note_id = self._clip.add_new_notes([new_note])[0]
             # self._selected_note_id = SelectedNote((x, y), new_note_id)
 
         # self._control_surface.log_message(f"self._selected_note_id at end       = {self._selected_note_id}")
@@ -389,7 +400,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     note_key = note.pitch  #note[0]  # key: 0-127 MIDI note #
                     note_velocity =  note.velocity #note[3]  # velocity: 0-127 value #
 
-                    # self._control_surface.log_message(f"note = {note}")
+                    self._control_surface.log_message(f"note pos = {note_position}")
                     # self._control_surface.log_message(f"self.width/height = {self.width}/{self.height}")
                     # self._control_surface.log_message(f"self.number_of_lines_per_note = {self.number_of_lines_per_note}")
                     # self._control_surface.log_message(f"self.quantization = {self.quantization}")
@@ -406,12 +417,13 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     #1.5 = 6
                     #1.75 = 7
 
-                    # self._control_surface.log_message(f"note_page = {note_page}")
-                    # self._control_surface.log_message(f"play_page = {play_page}")
-                    # self._control_surface.log_message(f"play_row = {play_row}")
-                    #
-                    # self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
-                    # self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
+                    self._control_surface.log_message(f"note_page = {note_page}")
+                    self._control_surface.log_message(f"play_page = {play_page}")
+                    self._control_surface.log_message(f"play_row = {play_row}")
+                    self._control_surface.log_message(f"self page = {self._page}")
+
+                    self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
+                    self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
 
                     velocity_color = self.velocity_color_map[0]
                     for index in range(len(self.velocity_map)):
@@ -422,7 +434,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
 
                     # if self._selected_note_id_id is not None:
-                    self._control_surface.log_message(f"_update self._selected_note_id = {self._selected_note_id} == {note.note_id}")
+                    # self._control_surface.log_message(f"_update self._selected_note_id = {self._selected_note_id} == {note.note_id}")
 
                     if note.note_id == self._selected_note_id:
                         self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self._selected_note_id_color
