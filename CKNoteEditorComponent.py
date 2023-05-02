@@ -6,11 +6,6 @@ from _Framework.ButtonElement import ButtonElement
 import time
 import Live
 
-@dataclass
-class SelectedNote:
-    x_y:(int, int)
-    note_id:int
-
 # Single notes only!
 class CKNoteEditorComponent(ControlSurfaceComponent):
 
@@ -55,8 +50,8 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                                    "StepSequencer.NoteEditor.Velocity4"]
 
 
-        self.selected_note = None
-        self.selected_note_color = "StepSequencer.NoteEditor.Playing"
+        self._selected_note_id = None
+        self._selected_note_id_color = "StepSequencer.NoteEditor.Playing"
 
         # matrix
         if matrix != None:
@@ -146,8 +141,8 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         self._shift_down = True
 
     def increment_selected_note_velocity(self):
-        if self.selected_note is not None:
-            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+        if self._selected_note_id is not None:
+            notes = self._clip.get_notes_by_id([self._selected_note_id])
             if notes[0].velocity <117:
                 notes[0].velocity = notes[0].velocity + 10
             else:
@@ -156,8 +151,8 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
             self._clip.apply_note_modifications(notes)
 
     def decrement_selected_note_velocity(self):
-        if self.selected_note is not None:
-            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+        if self._selected_note_id is not None:
+            notes = self._clip.get_notes_by_id([self._selected_note_id])
             if notes[0].velocity > 10:
                 notes[0].velocity = notes[0].velocity - 10
             else:
@@ -166,8 +161,8 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
             self._clip.apply_note_modifications(notes)
 
     def decrement_selected_note(self):
-        if self.selected_note is not None:
-            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+        if self._selected_note_id is not None:
+            notes = self._clip.get_notes_by_id([self._selected_note_id])
             notes[0].pitch = notes[0].pitch-1
             self._clip.apply_note_modifications(notes)
         else:
@@ -180,8 +175,8 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         self._update_matrix()
 
     def increment_selected_note(self):
-        if self.selected_note is not None:
-            notes = self._clip.get_notes_by_id([self.selected_note.note_id])
+        if self._selected_note_id is not None:
+            notes = self._clip.get_notes_by_id([self._selected_note_id])
             notes[0].pitch = notes[0].pitch+1
             self._clip.apply_note_modifications(notes)
         else:
@@ -319,16 +314,16 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         for note in all_notes:
             if start_time == note.start_time: # Exists
                 if self._shift_down:
-                    if self.selected_note is not None and self.selected_note.note_id == note.note_id:
-                        self.selected_note = None
+                    if note.note_id == self._selected_note_id:
+                        self._selected_note_id = None
 
                     self._clip.remove_notes_extended(0, 127, start_time, note.duration)
-                if self.selected_note is not None and self.selected_note.note_id == note.note_id:
-                    self.selected_note = None
-                elif self.selected_note is not None and self.selected_note.note_id != note.note_id:
-                    self.selected_note = SelectedNote((x, y), note.note_id)
-                elif self.selected_note is None:
-                    self.selected_note = SelectedNote((x, y), note.note_id)
+                elif note.note_id == self._selected_note_id:
+                    self._selected_note_id = None
+                elif note.note_id != self._selected_note_id:
+                    self._selected_note_id = note.note_id
+                elif self._selected_note_id is None:
+                    self._selected_note_id = note.note_id
                 break
         else:
             new_note = Live.Clip.MidiNoteSpecification(pitch=pitch,
@@ -337,9 +332,9 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                                                    velocity=velocity)
 
             new_note_id = self._clip.add_new_notes([new_note])[0]
-            # self.selected_note = SelectedNote((x, y), new_note_id)
+            # self._selected_note_id = SelectedNote((x, y), new_note_id)
 
-        self._control_surface.log_message(f"self.selected_note at end       = {self.selected_note}")
+        # self._control_surface.log_message(f"self._selected_note_id at end       = {self._selected_note_id}")
         self._update_matrix()
 
 
@@ -411,12 +406,12 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     #1.5 = 6
                     #1.75 = 7
 
-                    self._control_surface.log_message(f"note_page = {note_page}")
-                    self._control_surface.log_message(f"play_page = {play_page}")
-                    self._control_surface.log_message(f"play_row = {play_row}")
-
-                    self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
-                    self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
+                    # self._control_surface.log_message(f"note_page = {note_page}")
+                    # self._control_surface.log_message(f"play_page = {play_page}")
+                    # self._control_surface.log_message(f"play_row = {play_row}")
+                    #
+                    # self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
+                    # self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
 
                     velocity_color = self.velocity_color_map[0]
                     for index in range(len(self.velocity_map)):
@@ -426,11 +421,11 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
 
                     self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
 
-                    if self.selected_note is not None:
-                        self._control_surface.log_message(f"_update self.selected_note = {self.selected_note} {self.selected_note.note_id} == {note.note_id}")
+                    # if self._selected_note_id_id is not None:
+                    self._control_surface.log_message(f"_update self._selected_note_id = {self._selected_note_id} == {note.note_id}")
 
-                    if self.selected_note is not None and self.selected_note.note_id == note.note_id:
-                        self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.selected_note_color
+                    if note.note_id == self._selected_note_id:
+                        self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self._selected_note_id_color
 
                     # Calculate note position in the grid (note position to matrix button logic)
                     # if self.is_multinote:
