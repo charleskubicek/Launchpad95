@@ -26,6 +26,15 @@ STEPSEQ_MODE_SCALE_EDIT = 10
 
 LONG_BUTTON_PRESS = 1.0
 
+colour_red_flash = 11
+colour_red_low = 13
+colour_red_full = 15
+colour_amber_low = 29
+colour_amber_full = 63
+colour_yellow = 62
+colour_green_low = 28
+colour_green_full = 60
+
 class CKNoteSelectorComponent(ControlSurfaceComponent):
 
     def __init__(self, step_sequencer, buttons, control_surface):
@@ -45,14 +54,13 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
         self._buttons[4].add_value_listener(self.shift_left_button_value)
         self._buttons[5].add_value_listener(self.shift_right_button_value)
 
-        self._buttons[6].add_value_listener(self.shift_left_button_value)
-        self._buttons[7].add_value_listener(self.shift_right_button_value)
+        self._buttons[6].add_value_listener(self.random_note_button_value)
+        self._buttons[7].add_value_listener(self.random_velocity_button_value)
 
-        self._buttons[8].add_value_listener(self.random_note_button_value)
-        self._buttons[9].add_value_listener(self.random_velocity_button_value)
+        self._buttons[8].add_value_listener(self.half_clip_size_button_value)
+        self._buttons[9].add_value_listener(self.duplicate_clip_button_value)
 
-        self._buttons[10].add_value_listener(self.half_clip_size_button_value)
-        self._buttons[11].add_value_listener(self.duplicate_clip_button_value)
+        self._buttons[12].add_value_listener(self.shift_value_button)
 
         self._key = 4
         self._root_note = 36
@@ -75,12 +83,46 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
 
     def set_enabled(self, enabled):
         # if enabled:
+            # self._buttons[0].set_enabled(True)
+            # self._buttons[0].set_light("QuickScale.Quant.Mode")
+            # self._buttons[0].send_value(127)
+            # self._buttons[0].set_on_off_values("StepSequencer.NoteSelector.Selected", "Note.Pads.Root")
+            # self._buttons[0].set_enabled(True)
+            # self._buttons[0].turn_on()
+        # if enabled:
         #     self._cache = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
         ControlSurfaceComponent.set_enabled(self, enabled)
+        #
+        # self._buttons[0].set_light("StepSequencer.Quantization.One")
+        # self._buttons[1].set_light("QuickScale.Quant.Mode")
+
+    def update(self):
+        if self.is_enabled():
+            self._buttons[0].set_on_off_values("StepSequencer.NoteSelector.Selected", "Note.Pads.Root")
+            self._buttons[0].set_enabled(True)
+            self._buttons[0].turn_on()
+            self._buttons[0].send_value(colour_amber_low)
+            self._buttons[1].send_value(colour_yellow)
+            self._buttons[2].send_value(colour_green_low)
+            self._buttons[3].send_value(colour_green_full)
+            self._buttons[4].send_value(colour_amber_low)
+            self._buttons[5].send_value(colour_yellow)
+            self._buttons[6].send_value(colour_red_low)
+            self._buttons[7].send_value(colour_red_full)
+            self._buttons[12].send_value(colour_red_full)
+
 
     @property
     def selected_note(self):
         return self._root_note + self._offset
+
+    def shift_value_button(self, value):
+        if value == 127:
+            self._step_sequencer.shift_down()
+            self._buttons[12].send_value(colour_green_full)
+        else:
+            self._step_sequencer.shift_up()
+            self._buttons[12].send_value(colour_red_full)
 
     def note_dec_button_value(self, value):
         if value != 0:
@@ -248,13 +290,14 @@ class CKStepSequencerComponent(CompoundComponent):
         # self._note_selector.set_up_button(self._side_buttons[4])#Stop
         # self._note_selector.set_down_button(self._side_buttons[5])#Trk On
 
+
+
         self._note_selector = self.register_component(CKNoteSelectorComponent(self, [
                 self._matrix.get_button(0, 4), self._matrix.get_button(1, 4), self._matrix.get_button(2, 4), self._matrix.get_button(3, 4),
                 self._matrix.get_button(0, 5), self._matrix.get_button(1, 5), self._matrix.get_button(2, 5), self._matrix.get_button(3, 5),
                 self._matrix.get_button(0, 6), self._matrix.get_button(1, 6), self._matrix.get_button(2, 6), self._matrix.get_button(3, 6),
                 self._matrix.get_button(0, 7), self._matrix.get_button(1, 7), self._matrix.get_button(2, 7), self._matrix.get_button(3, 7),
         ], self._control_surface))
-
 
     def _set_track_controller(self):#Navigation buttons
         self._track_controller = self.register_component(TrackControllerComponent(self._control_surface, implicit_arm = False))
@@ -469,6 +512,11 @@ class CKStepSequencerComponent(CompoundComponent):
     def increment_note(self):
         self._note_editor.increment_selected_note()
         self.update()
+
+    def shift_down(self):
+        self._note_editor.shift_down()
+    def shift_up(self):
+        self._note_editor.shift_up()
 
     def decrement_note(self):
         self._note_editor.decrement_selected_note()

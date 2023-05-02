@@ -96,7 +96,7 @@ class ConfigurableButtonElement(ButtonElement):
 			super(ConfigurableButtonElement, self).send_value(self._on_value, **k)
 		else:
 			self._draw_skin(self._on_value)
-			
+
 	def _do_send_off_value(self, **k):
 		if type(self._off_value) is int:
 			super(ConfigurableButtonElement, self).send_value(self._off_value, **k)
