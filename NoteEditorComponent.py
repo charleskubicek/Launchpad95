@@ -156,7 +156,6 @@ class NoteEditorComponent(ControlSurfaceComponent):
         self._update_matrix()
 
     def update(self, force=False):
-        self._control_surface.log_message(f"NE update. {self.is_enabled()}")
         if self.is_enabled():
             if force:
                 self._force_update = True

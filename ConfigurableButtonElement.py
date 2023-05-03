@@ -19,6 +19,7 @@ class ConfigurableButtonElement(ButtonElement):
 		if default_states is not None:
 			self.default_states = default_states
 		self.states = dict(self.default_states)
+		self.identifier = identifier
 
 	@property
 	def _on_value(self):

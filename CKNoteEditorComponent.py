@@ -237,7 +237,6 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
             self._clip.loop_end = self._clip.loop_end * 2
 
     def update(self, force=False):
-        self._control_surface.log_message(f"NE update. {self.is_enabled()}")
         if self.is_enabled():
             # if force:
             #     self._force_update = True

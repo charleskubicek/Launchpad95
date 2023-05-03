@@ -26,6 +26,7 @@ STEPSEQ_MODE_SCALE_EDIT = 10
 
 LONG_BUTTON_PRESS = 1.0
 
+off = 12
 colour_red_flash = 11
 colour_red_low = 13
 colour_red_full = 15
@@ -87,6 +88,9 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
 
     def update(self):
         if self.is_enabled():
+            for b in self._buttons:
+                b.send_value(off)
+
             self._buttons[0].send_value(colour_amber_low)
             self._buttons[1].send_value(colour_yellow)
             self._buttons[2].send_value(colour_green_low)
@@ -206,8 +210,24 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_note_selector()
         self._set_track_controller()
         self._scale_updated()
+
+        self.set_scene_triggers()
         # TODO: maybe clean this... this should be done on enable.
         # self.on_clip_slot_changed()
+
+    def set_scene_triggers(self):
+        for b in self._side_buttons:
+            b.add_value_listener(self.on_scene_trigger, identify_sender=True)
+            b.send_value(colour_amber_low)
+
+    def on_scene_trigger(self, value, sender):
+        if value != 0:
+            for b in self._side_buttons:
+                b.send_value(colour_amber_low)
+
+            idx = int((sender.identifier / 8) / 2)
+            self.song().scenes[idx].fire()
+            self._side_buttons[idx].send_value(colour_green_full)
 
     def disconnect(self):
         self._clip = None
