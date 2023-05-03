@@ -180,7 +180,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._playhead = 0
         self._new_clip_pages = 4
         # mode
-        self._mode = -1
+        self._mode = STEPSEQ_MODE_NORMAL
         self._mode_backup = self._mode
         # buttons
         self._height = matrix.height()
@@ -195,6 +195,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._chromatic_scale = []
         self._diatonic_scale = []
 
+        self._quantization = 0.25
         self._beat = 0
 
         self._selected_track = None
@@ -204,8 +205,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_note_editor()
         self._set_note_selector()
         self._set_track_controller()
-        self._set_quantization_function()
-        self._set_mode_function()
         self._scale_updated()
         # TODO: maybe clean this... this should be done on enable.
         # self.on_clip_slot_changed()
@@ -214,7 +213,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._clip = None
 
         self._shift_button = None
-        self._quantization_button = None
         self._top_buttons = None
         self._side_buttons = None
         self._matrix = None
@@ -224,19 +222,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._note_selector = None
         self._track_controller = None
 
-    # SET FUNCTIONS
-    def _set_mode_function(self): #Change the resolution of the sequencer
-        self._mode_button = None
-        self.set_mode_button(self._side_buttons[3]) #SndB
-        self._last_mode_button_press = time.time()
-        self._number_of_lines_per_note = 1
-
-    def _set_quantization_function(self):
-        self._quantization_index = 2
-        self.set_quantization(QUANTIZATION_MAP[self._quantization_index])
-        self._quantization_button = None
-        self._last_quantize_button_press = time.time()
-        self.set_quantization_button(self._side_buttons[2])#SndA
 
     # Set 4x4 lower right matrix section that manages the loop range OK
     def _set_loop_selector(self):
@@ -538,8 +523,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._note_editor.update()
 
     def _update_buttons(self):
-        self._update_quantization_button()
-        self._update_mode_button()
         self._update_left_button()
         self._update_right_button()
 
@@ -700,7 +683,6 @@ class CKStepSequencerComponent(CompoundComponent):
             self._loop_selector.set_playhead(self._playhead)
             # self._note_selector.set_playhead(self._playhead)
             self._note_editor.set_playhead(self._playhead)
-            self.updateQuantizationButton()
 
     # DRUM_GROUP_DEVICE
     def _update_drum_group_device(self):
@@ -732,114 +714,6 @@ class CKStepSequencerComponent(CompoundComponent):
         else:
             return None
 
-    # MODE
-    def _update_mode_button(self):
-        if self.is_enabled():
-            if (self._mode_button != None):
-                if self._clip != None:
-                    self._mode_button.set_on_off_values("StepSequencer.Mode")
-                    if self._mode == STEPSEQ_MODE_MULTINOTE:
-                        self._mode_button.turn_on()
-                        self._osd.update()
-                    else:
-                        self._mode_button.turn_off()
-                        self._osd.update()
-                else:
-                    self._mode_button.set_light("DefaultButton.Disabled")
-
-    def set_mode_button(self, button):#remove old mode button listener and adds new one
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (self._mode_button != button):
-            if (self._mode_button != None):
-                self._mode_button.remove_value_listener(self._mode_button_value)
-            self._mode_button = button
-            if (self._mode_button != None):
-                assert isinstance(button, ButtonElement)
-                self._mode_button.add_value_listener(self._mode_button_value, identify_sender=True)
-
-    def _mode_button_value(self, value, sender):
-        assert (self._mode_button != None)
-        assert (value in range(128))
-        if self.is_enabled() and self._clip != None:
-            if ((value is not 0) or (not sender.is_momentary())):
-                self._last_mode_button_press = time.time()
-            else:
-                if self._mode == STEPSEQ_MODE_MULTINOTE and time.time() - self._last_mode_button_press > 0.25:
-                    if(self._number_of_lines_per_note == 1):
-                        number_of_lines_per_note = 2
-                    else:
-                        number_of_lines_per_note = 1
-                    self.set_mode(STEPSEQ_MODE_MULTINOTE, number_of_lines_per_note)
-
-                elif self._mode != STEPSEQ_MODE_MULTINOTE:
-                    self.set_mode(STEPSEQ_MODE_MULTINOTE, self._number_of_lines_per_note)
-
-                else:
-                    self.set_mode(STEPSEQ_MODE_NORMAL, self._number_of_lines_per_note)
-                self._scale_updated()
-
-    # QUANTIZE
-    def _update_quantization_button(self):
-        if self.is_enabled() and self._quantization_button != None:
-            if self._clip != None:
-                self._quantization_button.set_light(self.QUANTIZATION_COLOR_MAP[self._quantization_index])
-            else:
-                self._quantization_button.set_light("DefaultButton.Disabled")
-
-    # Refresh button and its listener OK
-    def set_quantization_button(self, button):
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (self._quantization_button != button):
-            if (self._quantization_button != None):
-                self._quantization_button.remove_value_listener(self._quantization_button_value)
-            self._quantization_button = button
-            if (self._quantization_button != None):
-                self._quantization_button.add_value_listener(self._quantization_button_value, identify_sender=True)
-
-    # Handle button holded and quantization resolution selection OK
-    def _quantization_button_value(self, value, sender):
-        assert (self._quantization_button != None)
-        assert (value in range(128))
-        if self.is_enabled() and self._clip != None:
-            now = time.time()
-            if ((value is not 0) or (not sender.is_momentary())):
-                self._last_quantize_button_press = now
-            else:
-                if now - self._last_quantize_button_press > 0.5:
-                    self._control_surface.show_message("Step Sequencer: duplicate clip")
-                    self.duplicate_clip()
-                else:
-                    if(self._mode == STEPSEQ_MODE_SCALE_EDIT):
-                        self._quantization_index = (self._quantization_index - 1+len(QUANTIZATION_MAP)) % len(QUANTIZATION_MAP)
-                    else:
-                        self._quantization_index = (self._quantization_index + 1) % len(QUANTIZATION_MAP)
-                    self.set_quantization(QUANTIZATION_MAP[self._quantization_index])
-                    self._control_surface.show_message("QUANTIZATION : "+QUANTIZATION_NAMES[self._quantization_index])
-
-                    self._update_quantization_button()
-
-
-    def updateQuantizationButton(self):
-        if self.is_enabled() and self._quantization_button != None and self._playhead != None:
-            if(self._beat == int(self._playhead)):
-                self._quantization_button.set_light(self.QUANTIZATION_COLOR_MAP_LOW[self._quantization_index])
-            else:
-                self._beat = int(self._playhead)
-                self._update_quantization_button()
-
-    def set_quantization(self, quantization):
-        self._quantization = quantization
-        if self._note_editor != None:
-            self._note_editor.set_quantization(self._quantization)
-        if self._loop_selector != None:
-            self._update_loop_selector()
-        if self._note_selector != None:
-            self._update_note_selector()
-        if self._note_editor != None:
-            self._update_note_editor()
-        self._update_OSD()
-
-    # RIGHT Button
     def _update_right_button(self):
         if self.is_enabled():
             if self._right_button != None:
