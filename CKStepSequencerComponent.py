@@ -548,10 +548,11 @@ class CKStepSequencerComponent(CompoundComponent):
             self._update_note_editor()
             self._update_OSD()
             # show clip !
-            if not self._is_locked and self._clip != None:
-                if ((not self.application().view.is_view_visible('Detail')) or (not self.application().view.is_view_visible('Detail/Clip'))):
-                    self.application().view.show_view('Detail')
-                    self.application().view.show_view('Detail/Clip')
+            # if not self._is_locked and self._clip != None:
+            #     if ((not self.application().view.is_view_visible('Detail')) or (not self.application().view.is_view_visible('Detail/Clip'))):
+            #         self.application().view.show_view('Detail')
+            #         self._control_surface.log_message(f"CKSeq update siwtching to Detail/Clip line 554")
+            #         self.application().view.show_view('Detail/Clip')
 
     def _update_track_controller(self):
         if self._track_controller != None:
