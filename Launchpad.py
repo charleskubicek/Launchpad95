@@ -160,8 +160,8 @@ class Launchpad(ControlSurface):
 				if isinstance(control, ConfigurableButtonElement):
 					control.add_value_listener(self._button_value)
 		  
-			self._suppress_session_highlight = False
-			self.set_highlighting_session_component(self._selector.session_component())
+			self._suppress_session_highlight = True
+			# self.set_highlighting_session_component(self._selector.session_component())
 			# due to our 2 stage init, we need to rebuild midi map 
 			self.request_rebuild_midi_map()
 			# and request update 
@@ -212,29 +212,32 @@ class Launchpad(ControlSurface):
 		offset = 0
 		for instance in Launchpad._active_instances:
 			instance._activate_combination_mode(offset, support_devices)
-			offset += instance._selector._session.width()
+			# offset += instance._selector._session.width()
 
 	_combine_active_instances = staticmethod(_combine_active_instances)
 
 	def _activate_combination_mode(self, track_offset, support_devices):
-		if(Settings.STEPSEQ__LINK_WITH_SESSION):
-			self._selector._stepseq.link_with_step_offset(track_offset)
-		if(Settings.SESSION__LINK):
-			self._selector._session.link_with_track_offset(track_offset)
+		# if(Settings.STEPSEQ__LINK_WITH_SESSION):
+		# 	self._selector._stepseq.link_with_step_offset(track_offset)
+		# if(Settings.SESSION__LINK):
+		# 	self._selector._session.link_with_track_offset(track_offset)
+		pass
 
 	def _do_combine(self):
-		if (DO_COMBINE and (self not in Launchpad._active_instances)):
-			Launchpad._active_instances.append(self)
-			Launchpad._combine_active_instances()
+		# if (DO_COMBINE and (self not in Launchpad._active_instances)):
+		# 	Launchpad._active_instances.append(self)
+		# 	Launchpad._combine_active_instances()
+		pass
 
 	def _do_uncombine(self):
-		if self in Launchpad._active_instances:
-			Launchpad._active_instances.remove(self)
-			if(Settings.SESSION__LINK):
-				self._selector._session.unlink()
-			if(Settings.STEPSEQ__LINK_WITH_SESSION):
-				self._selector._stepseq.unlink()
-			Launchpad._combine_active_instances()
+		# if self in Launchpad._active_instances:
+		# 	Launchpad._active_instances.remove(self)
+		# 	if(Settings.SESSION__LINK):
+		# 		self._selector._session.unlink()
+		# 	if(Settings.STEPSEQ__LINK_WITH_SESSION):
+		# 		self._selector._stepseq.unlink()
+		# 	Launchpad._combine_active_instances()
+		pass
 
 	def refresh_state(self):
 		ControlSurface.refresh_state(self)
@@ -358,9 +361,9 @@ class Launchpad(ControlSurface):
 	def _config_value(self, value):
 		assert value in range(128)
 
-	def _set_session_highlight(self, track_offset, scene_offset, width, height, include_return_tracks):
-		if not self._suppress_session_highlight:
-			ControlSurface._set_session_highlight(self, track_offset, scene_offset, width, height, include_return_tracks)
+	# def _set_session_highlight(self, track_offset, scene_offset, width, height, include_return_tracks):
+	# 	if not self._suppress_session_highlight:
+	# 		ControlSurface._set_session_highlight(self, track_offset, scene_offset, width, height, include_return_tracks)
 			
 	def _init_note_repeat(self):
 		self._note_repeat = NoteRepeatComponent(name='Note_Repeat')

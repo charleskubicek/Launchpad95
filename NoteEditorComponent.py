@@ -205,8 +205,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
     # Updates the LP LEDs OK
     def _update_matrix(self):
-        self._control_surface.log_message(
-            f"NE update_matrix. {self.is_enabled()}, {self._matrix}, clip:{self._clip}, _note_cache: {self._note_cache}")
+        # self._control_surface.log_message(
+        #     f"NE update_matrix. {self.is_enabled()}, {self._matrix}, clip:{self._clip}, _note_cache: {self._note_cache}")
         if self.is_enabled() and self._matrix != None:
 
             # clear back buffer
@@ -342,7 +342,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
     # Add/Delete/Mute notes in the cache for PL light management and in the Live's Clip OK
     def _matrix_value_message(self, values):  # (value=127/0, x=idx, y=idx, is_momentary=True)
-        self._control_surface.log_message(f"_matrix_value_message. clip: {self._clip}")
+        # self._control_surface.log_message(f"_matrix_value_message. clip: {self._clip}")
         value = values[0]
         x = values[1]
         y = values[2]
@@ -378,10 +378,10 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
                 # TODO: use new better way for editing clip
 
-        self._control_surface.log_message(f"_matrix_value_message: {pitch}")
-        self._control_surface.log_message("all notes:")
-        for x in self._clip.get_selected_notes():
-            self._control_surface.log_message(f"all notes: {x}")
+        # self._control_surface.log_message(f"_matrix_value_message: {pitch}")
+        # self._control_surface.log_message("all notes:")
+        # for x in self._clip.get_selected_notes():
+        #     self._control_surface.log_message(f"all notes: {x}")
 
         self._clip.select_all_notes()
         note_cache = self._clip.get_selected_notes()
@@ -389,10 +389,10 @@ class NoteEditorComponent(ControlSurfaceComponent):
             self._note_cache = note_cache
 
         note_cache = list(self._note_cache)
-        self._control_surface.log_message(f"_matrix_value_message note cache len: {len(note_cache)}")
+        # self._control_surface.log_message(f"_matrix_value_message note cache len: {len(note_cache)}")
 
-        for note in note_cache:
-            self._control_surface.log_message(f"_matrix_value_message in Loop: {note[0]}, {pitch}  {time}, {note[1]}")
+        # for note in note_cache:
+        #     self._control_surface.log_message(f"_matrix_value_message in Loop: {note[0]}, {pitch}  {time}, {note[1]}")
 
         for note in note_cache:
             if pitch == note[0] and time == note[1]:
