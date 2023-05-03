@@ -196,6 +196,9 @@ class CKStepSequencerComponent(CompoundComponent):
         self._diatonic_scale = []
 
         self._beat = 0
+
+        self._selected_track = None
+
         # setup
         self._set_loop_selector()
         self._set_note_editor()
@@ -204,7 +207,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_scale_selector()
         self._set_quantization_function()
         self._set_mute_shift_function()
-        self._set_lock_function()
         self._set_mode_function()
         self._scale_updated()
         # TODO: maybe clean this... this should be done on enable.
@@ -213,7 +215,6 @@ class CKStepSequencerComponent(CompoundComponent):
     def disconnect(self):
         self._clip = None
 
-        self._lock_button = None
         self._shift_button = None
         self._quantization_button = None
         self._top_buttons = None
@@ -232,16 +233,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self.set_mode_button(self._side_buttons[3]) #SndB
         self._last_mode_button_press = time.time()
         self._number_of_lines_per_note = 1
-
-    def _set_lock_function(self):
-        self._control_surface.log_message("_set_lock_function")
-        self._is_locked = False
-        self._lock_to_track = False
-        self._last_lock_button_press = time.time()
-        self._long_press = 0.5
-        self._lock_button = None
-        self.set_lock_button(self._side_buttons[1])#Pan
-        self._selected_track = None
 
     def _set_mute_shift_function(self): #Allow to mute notes in the grid or all notes if selecting on Note Selector #FIX bad behavior
         self._mute_shift_button = None
@@ -352,20 +343,15 @@ class CKStepSequencerComponent(CompoundComponent):
                 self._osd.attribute_names[7] = " "
 
             if self._selected_track != None:
-                if self._lock_to_track and self._is_locked:
-                    self._osd.info[0] = "track : " + self._selected_track.name + " (locked)"
-                else:
-                    self._osd.info[0] = "track : " + self._selected_track.name
+                self._osd.info[0] = "track : " + self._selected_track.name
             else:
                 self._osd.info[0] = " "
             if self._clip != None:
                 name = self._clip.name
                 if name == "":
                     name = "(unamed clip)"
-                if not self._lock_to_track and self._is_locked:
-                    self._osd.info[1] = "clip : " + name + " (locked)"
-                else:
-                    self._osd.info[1] = "clip : " + name
+
+                self._osd.info[1] = "clip : " + name
             else:
                 self._osd.info[1] = "no clip selected"
             self._osd.update()
@@ -411,8 +397,7 @@ class CKStepSequencerComponent(CompoundComponent):
             self.on_clip_slot_changed()
             # call super.set_enabled()
             CompoundComponent.set_enabled(self, enabled)
-            if self._clip != None and self._is_locked:
-                self._control_surface.show_message("stepseq : clip '"+str(self._clip.name)+"'")
+
             self._on_notes_changed()
             self._update_OSD()
 
@@ -429,7 +414,6 @@ class CKStepSequencerComponent(CompoundComponent):
             self._note_editor.set_multinote(mode == STEPSEQ_MODE_MULTINOTE, number_of_lines_per_note)
             if mode == STEPSEQ_MODE_NORMAL:
                 if self._mode != mode:
-                    # self._loop_selector._block = self._loop_selector._block * self._number_of_lines_per_note
                     self._note_editor.set_page(self._loop_selector._block)
                 self.set_left_button(None)
                 self.set_right_button(None)
@@ -437,7 +421,6 @@ class CKStepSequencerComponent(CompoundComponent):
                 self._track_controller.set_next_track_button(self._top_buttons[3])
             else:
                 if self._mode != mode:
-                    # self._loop_selector._block = self._loop_selector._block / self._number_of_lines_per_note
                     self._note_editor.set_page(self._loop_selector._block)
                 self._track_controller.set_prev_track_button(None)
                 self._track_controller.set_next_track_button(None)
@@ -586,7 +569,6 @@ class CKStepSequencerComponent(CompoundComponent):
 
     def _update_buttons(self):
         self._update_quantization_button()
-        self._update_lock_button()
         self._update_mode_button()
         self._update_mute_shift_button()
         self._update_scale_selector_button()
@@ -606,7 +588,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self.update()
 
     def on_selected_track_changed(self):
-        if not self._is_locked or self._clip == None:
+        if self._clip == None:
             self._detect_scale_mode()
             self.on_clip_slot_changed()
             self.update()
@@ -617,8 +599,6 @@ class CKStepSequencerComponent(CompoundComponent):
 
     def on_clip_slot_has_clip_changed(self):
         # the clip was deleted. unlock.
-        if not self._clip_slot.has_clip:
-            self._is_locked = False
         self.on_clip_slot_changed()
         self.update()
 
@@ -627,42 +607,18 @@ class CKStepSequencerComponent(CompoundComponent):
         clip_slot = self._clip_slot
 
         # update track if not track locked
-        if not self._is_locked or self._selected_track == None:
+        if self._selected_track == None:
             self._selected_track = self.song().view.selected_track
 
         # update scene
         if self._selected_track != None:
             idx = -1
-            if self._lock_to_track and self._is_locked:
-                # track locked mode
-
-                # schedule a refresh as scene fire happens after scene selection
-                # so that we can catch the clip scheduled for playing
-                if not scheduled:
-                    self._control_surface.schedule_message(5, self.on_clip_slot_changed, (True))
-
-                # locate with clip pending fire
-                for i in range(len(self.song().scenes)):
-                    if self._selected_track.clip_slots[i].has_clip and self._selected_track.clip_slots[i].clip.is_triggered:
-                        idx = i
-                # no tirggered clip, locate with playing clip
-                if idx == -1:
-                    for i in range(len(self.song().scenes)):
-                        if self._selected_track.clip_slots[i].has_clip and self._selected_track.clip_slots[i].clip.is_playing:
-                            idx = i
-                # fallback: use scene selection
-                if idx == -1:
-                    try:
-                        idx = list(self.song().scenes).index(self.song().view.selected_scene)
-                    except ValueError:
-                        idx = -1
 
             # unlocked mode
-            if not self._is_locked:
-                try:
-                    idx = list(self.song().scenes).index(self.song().view.selected_scene)
-                except ValueError:
-                    idx = -1
+            try:
+                idx = list(self.song().scenes).index(self.song().view.selected_scene)
+            except ValueError:
+                idx = -1
             if(idx != -1 and idx < len(list(self._selected_track.clip_slots))):
                 clip_slot = self._selected_track.clip_slots[idx]
 
@@ -799,9 +755,9 @@ class CKStepSequencerComponent(CompoundComponent):
             self._drum_group_device = None
 
     def _detect_scale_mode(self):
-        if not self._is_locked:
-            self._update_drum_group_device()
-            self._scale_selector.set_drumrack(self._drum_group_device != None)
+
+        self._update_drum_group_device()
+        self._scale_selector.set_drumrack(self._drum_group_device != None)
 
     def find_drum_group_device(self, track):
         device = find_if(lambda d: d.type == Live.Device.DeviceType.instrument, track.devices)#find track's Instrument device
@@ -1003,53 +959,6 @@ class CKStepSequencerComponent(CompoundComponent):
             self._update_note_editor()
         self._update_OSD()
 
-    # LOCK Button
-    def _update_lock_button(self):
-        if self.is_enabled():
-            if self._lock_button != None:
-                if self._clip != None:
-                    if self._lock_to_track:
-                        self._lock_button.set_on_off_values("StepSequencer.Lock.ToTrack")
-                    else:
-                        self._lock_button.set_on_off_values("StepSequencer.Lock.ToClip")
-                    if self._is_locked:
-                        self._lock_button.turn_on()
-                    else:
-                        self._lock_button.turn_off()
-                else:
-                    self._lock_button.set_light("DefaultButton.Disable")
-
-    def set_lock_button(self, button):
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (button != self._lock_button):
-            if (self._lock_button != None):
-                self._lock_button.remove_value_listener(self._lock_value)
-            self._lock_button = button
-            if (self._lock_button != None):
-                assert isinstance(button, ButtonElement)
-                self._lock_button.add_value_listener(self._lock_value, identify_sender=True)
-
-    def _lock_value(self, value, sender):
-        assert (self._lock_button != None)
-        assert (value in range(128))
-        if self.is_enabled() and self._clip != None:
-            now = time.time()
-            if ((value != 0) or (not self._lock_button.is_momentary())):
-                self._last_lock_button_press = now
-            else:
-                if now - self._last_lock_button_press > self._long_press:
-                    self._lock_to_track = (not self._lock_to_track)
-                    if not self._is_locked:
-                        self._control_surface.show_message("stepseq : locked to clip '"+str(self._clip.name)+"'")
-                        self._is_locked = True
-                    self._update_lock_button()
-                else:
-                    self._is_locked = (not self._is_locked)
-                    if self._is_locked:
-                        self._control_surface.show_message("stepseq : locked to clip '"+str(self._clip.name)+"'")
-                    self._update_lock_button()
-                    self._update_OSD()
-
     # RIGHT Button
     def _update_right_button(self):
         if self.is_enabled():
@@ -1129,14 +1038,13 @@ class CKStepSequencerComponent(CompoundComponent):
     def duplicate_clip(self):
         if self._clip_slot and self._clip_slot.has_clip:
             try:
-                if not self._is_locked or self._lock_to_track:
-                    track = self._clip_slot.canonical_parent
-                    newIdx = track.duplicate_clip_slot(list(track.clip_slots).index(self._clip_slot))
-                    self.song().view.selected_scene = self.song().scenes[newIdx]
-                    #if track.clip_slots[newIdx] != None:
-                    #track.clip_slots[newIdx].fire()
-                    self.on_clip_slot_changed()
-                    self.update()
+                track = self._clip_slot.canonical_parent
+                newIdx = track.duplicate_clip_slot(list(track.clip_slots).index(self._clip_slot))
+                self.song().view.selected_scene = self.song().scenes[newIdx]
+                #if track.clip_slots[newIdx] != None:
+                #track.clip_slots[newIdx].fire()
+                self.on_clip_slot_changed()
+                self.update()
             except Live.Base.LimitationError:
                 pass
             except RuntimeError:
