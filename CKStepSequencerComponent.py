@@ -205,7 +205,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_note_selector()
         self._set_track_controller()
         self._set_quantization_function()
-        self._set_mute_shift_function()
         self._set_mode_function()
         self._scale_updated()
         # TODO: maybe clean this... this should be done on enable.
@@ -231,12 +230,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self.set_mode_button(self._side_buttons[3]) #SndB
         self._last_mode_button_press = time.time()
         self._number_of_lines_per_note = 1
-
-    def _set_mute_shift_function(self): #Allow to mute notes in the grid or all notes if selecting on Note Selector #FIX bad behavior
-        self._mute_shift_button = None
-        self._last_mute_shift_button_press = time.time()
-        self.set_mute_shift_button(self._side_buttons[7])#Arm
-        self._is_mute_shifted = False
 
     def _set_quantization_function(self):
         self._quantization_index = 2
@@ -547,7 +540,6 @@ class CKStepSequencerComponent(CompoundComponent):
     def _update_buttons(self):
         self._update_quantization_button()
         self._update_mode_button()
-        self._update_mute_shift_button()
         self._update_left_button()
         self._update_right_button()
 
@@ -739,43 +731,6 @@ class CKStepSequencerComponent(CompoundComponent):
                 return find_if(bool, imap(self.find_drum_group_device, device.chains))#recursive->returns the first drum rack item of the chain
         else:
             return None
-
-    # MUTE SHIFT Button
-    def set_mute_shift_button(self, button):
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (self._mute_shift_button != button):
-            if (self._mute_shift_button != None):
-                self._mute_shift_button.remove_value_listener(self._mute_shift_button_value)
-            self._mute_shift_button = button
-            if (self._mute_shift_button != None):
-                assert isinstance(button, ButtonElement)
-                self._mute_shift_button.add_value_listener(self._mute_shift_button_value, identify_sender=True)
-
-    def _update_mute_shift_button(self):
-        if self.is_enabled() and self._mute_shift_button != None:
-            if self._clip != None and self._clip.is_midi_clip:
-                self._mute_shift_button.set_on_off_values("StepSequencer.Mute")
-                if self._is_mute_shifted:
-                    self._mute_shift_button.turn_on()
-                else:
-                    self._mute_shift_button.turn_off()
-            else:
-                self._mute_shift_button.set_light("DefaultButton.Disabled")
-
-    def _mute_shift_button_value(self, value, sender):
-        assert (self._mute_shift_button != None)
-        assert (value in range(128))
-        if self.is_enabled() and self._clip != None:
-            now = time.time()
-            if ((value is not 0) or (not sender.is_momentary())):
-                self._is_mute_shifted = not self._is_mute_shifted
-            else:
-                if now - self._last_mute_shift_button_press> 0.25:
-                    self._is_mute_shifted = not self._is_mute_shifted
-                self._last_mute_shift_button_press = now
-
-            self._note_editor._is_mute_shifted = self._is_mute_shifted
-            self._update_mute_shift_button()
 
     # MODE
     def _update_mode_button(self):
