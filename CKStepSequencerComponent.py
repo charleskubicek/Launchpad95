@@ -204,7 +204,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_note_editor()
         self._set_note_selector()
         self._set_track_controller()
-        self._set_scale_selector()
         self._set_quantization_function()
         self._set_mute_shift_function()
         self._set_mode_function()
@@ -224,7 +223,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._loop_selector = None
         self._note_editor = None
         self._note_selector = None
-        self._scale_selector = None
         self._track_controller = None
 
     # SET FUNCTIONS
@@ -286,19 +284,9 @@ class CKStepSequencerComponent(CompoundComponent):
         self._track_controller.set_prev_track_button(self._top_buttons[2])
         self._track_controller.set_next_track_button(self._top_buttons[3])
 
-    def _set_scale_selector(self):
-        self._scale_selector = self.register_component(ScaleComponent(self._control_surface))
-        self._scale_selector.set_osd(self._osd)
-        self._scale_selector.set_enabled(False)
-        self._scale_selector.set_matrix(self._matrix)
-        self._scale_selector._mode = "chromatic"
-        self._scale_selector._drumrack = False
-        self._scale_selector_button = None
-        self.set_scale_selector_button(self._side_buttons[0])
 
     def set_osd(self, osd):
         self._osd = osd
-        self._scale_selector.set_osd(osd)
 
     def _update_OSD(self):
         if self._osd != None:
@@ -308,14 +296,14 @@ class CKStepSequencerComponent(CompoundComponent):
                 self._osd.set_mode('Drum Step Sequencer')
 
             if self._clip != None:
-                self._osd.attributes[0] = MUSICAL_MODES[self._scale_selector._modus * 2]
-                self._osd.attribute_names[0] = "Scale"
-                self._osd.attributes[1] = KEY_NAMES[self._scale_selector._key % 12]
-                self._osd.attribute_names[1] = "Root Note"
-                self._osd.attributes[2] = self._scale_selector._octave
-                self._osd.attribute_names[2] = "Octave"
-                self._osd.attributes[3] = QUANTIZATION_NAMES[self._quantization_index]
-                self._osd.attribute_names[3] = "Quantisation"
+                self._osd.attributes[0] = " "
+                self._osd.attribute_names[0] = " "
+                self._osd.attributes[1] = " "
+                self._osd.attribute_names[1] = " "
+                self._osd.attributes[2] = " "
+                self._osd.attribute_names[2] = " "
+                self._osd.attributes[3] = " "
+                self._osd.attribute_names[3] = " "
                 self._osd.attributes[4] = " "
                 self._osd.attribute_names[4] = " "
                 self._osd.attributes[5] = " "
@@ -384,12 +372,6 @@ class CKStepSequencerComponent(CompoundComponent):
             if(self._drum_group_device): #Select the note
                 self._note_selector.set_selected_note(self.index_of(self._drum_group_device.drum_pads,self._drum_group_device.view.selected_drum_pad)) #FIX set view again
                 self._ck_note_selector.set_selected_note(self.index_of(self._drum_group_device.drum_pads,self._drum_group_device.view.selected_drum_pad)) #FIX set view again
-
-            #load scale settings from clip
-            # if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":  #????
-            #     self._scale_selector.from_object(self._clip)
-            #     self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
-            #     self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
 
             self._track_controller.set_enabled(enabled)
             self._note_editor.set_enabled(enabled)
@@ -524,7 +506,6 @@ class CKStepSequencerComponent(CompoundComponent):
     def update(self):
         if self.is_enabled():
             self._update_track_controller()
-            self._update_scale_selector()
             self._update_loop_selector()
             self._update_note_selector()
             self._update_buttons()
@@ -540,10 +521,6 @@ class CKStepSequencerComponent(CompoundComponent):
     def _update_track_controller(self):
         if self._track_controller != None:
             self._track_controller.set_enabled(True)
-
-    def _update_scale_selector(self):
-        self._scale_selector.set_enabled(self._mode == STEPSEQ_MODE_SCALE_EDIT)
-        self._scale_selector.update()
 
     def _update_loop_selector(self):
         self._loop_selector.set_enabled(self._mode == STEPSEQ_MODE_NORMAL)
@@ -571,7 +548,6 @@ class CKStepSequencerComponent(CompoundComponent):
         self._update_quantization_button()
         self._update_mode_button()
         self._update_mute_shift_button()
-        self._update_scale_selector_button()
         self._update_left_button()
         self._update_right_button()
 
@@ -649,13 +625,9 @@ class CKStepSequencerComponent(CompoundComponent):
 
                 #load scale settings from clip
                 if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":
-                    self._scale_selector.from_object(self._clip_slot.clip)
                     #must set clip to None otherwise it trigger a clip note update which we dont want.
                     self._clip = None
                     self._note_editor._clip = None
-                    # self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
-                    # self._control_surface.schedule_message(1, self._note_selector.set_selected_note,(self._scale_selector,self._scale_selector._octave * 12 + self._scale_selector._key))
-                    # self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
 
                 # link new clip
                 self._clip_slot.clip.add_notes_listener(self._on_notes_changed)
@@ -757,7 +729,6 @@ class CKStepSequencerComponent(CompoundComponent):
     def _detect_scale_mode(self):
 
         self._update_drum_group_device()
-        self._scale_selector.set_drumrack(self._drum_group_device != None)
 
     def find_drum_group_device(self, track):
         device = find_if(lambda d: d.type == Live.Device.DeviceType.instrument, track.devices)#find track's Instrument device
@@ -768,52 +739,6 @@ class CKStepSequencerComponent(CompoundComponent):
                 return find_if(bool, imap(self.find_drum_group_device, device.chains))#recursive->returns the first drum rack item of the chain
         else:
             return None
-
-    # SCALE Selector Button
-    def _update_scale_selector_button(self):
-        if self.is_enabled():
-            if (self._scale_selector_button != None):
-                if self._clip != None:
-                    self._scale_selector_button.set_on_off_values("StepSequencer.Scale")
-                else:
-                    self._scale_selector_button.set_on_off_values("DefaultButton.Disabled","DefaultButton.Disabled")
-                if self._mode == STEPSEQ_MODE_SCALE_EDIT:
-                    self._scale_selector_button.turn_on()
-                    self._osd.set_mode('Scale')
-                else:
-                    self._scale_selector_button.turn_off()
-
-    def set_scale_selector_button(self, button): #remove old scale button listener and adds new one
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (self._scale_selector_button != button):
-            if (self._scale_selector_button != None):
-                self._scale_selector_button.remove_value_listener(self._scale_selector_button_value)
-            self._scale_selector_button = button
-            if (self._scale_selector_button != None):
-                assert isinstance(button, ButtonElement)
-                self._scale_selector_button.add_value_listener(self._scale_selector_button_value)
-
-    def _scale_selector_button_value(self, value):
-        # assert (value in range(128))
-        # if self.is_enabled():
-        #
-        #     if value > 0:
-        #         self._mode_backup = self._mode
-        #         if self._scale_selector != None and self._note_selector != None:
-        #             self._scale_selector.set_octave(int(self._note_selector._root_note / 12))
-        #             self._scale_selector.set_key(self._note_selector._key)
-        #             self.set_mode(STEPSEQ_MODE_SCALE_EDIT)
-        #     else:
-        #         if self._scale_selector != None and self._note_selector != None:
-        #             self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
-        #             self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)
-        #             self._scale_updated()
-        #             #update clip name
-        #             if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":
-        #                 self._scale_selector.update_object_name(self._clip)
-        #         self.set_mode(self._mode_backup)
-        pass
-
 
     # MUTE SHIFT Button
     def set_mute_shift_button(self, button):
