@@ -511,9 +511,9 @@ class CKStepSequencerComponent(CompoundComponent):
         self._note_selector.update()
 
     def _update_note_editor(self):
-        self._control_surface.log_message(f"self._mode = {self._mode}")
-        self._control_surface.log_message(f"self._height = {self._height}")
-        self._control_surface.log_message(f"self._mode = {self._mode == STEPSEQ_MODE_NORMAL}")
+        # self._control_surface.log_message(f"self._mode = {self._mode}")
+        # self._control_surface.log_message(f"self._height = {self._height}")
+        # self._control_surface.log_message(f"self._mode = {self._mode == STEPSEQ_MODE_NORMAL}")
         self._note_editor.set_multinote(self._mode == STEPSEQ_MODE_MULTINOTE, self._number_of_lines_per_note)
         if self._mode == STEPSEQ_MODE_NORMAL:
             self._note_editor.set_height(self._height - 4)

@@ -353,7 +353,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
     def _update_matrix(self):
         # self._control_surface.log_message(f"CK NE update_matrix. {self.is_enabled()}, {self._matrix}, clip:{self._clip}, _note_cache: {self._note_cache}")
         if self.is_enabled() and self._matrix != None:
-            self._control_surface.log_message(f"update matrix self.height = {self.height}")
+            # self._control_surface.log_message(f"update matrix self.height = {self.height}")
             # clear back buffer
             for x in range(self.width):
                 for y in range(self.height):
@@ -400,7 +400,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     note_key = note.pitch  #note[0]  # key: 0-127 MIDI note #
                     note_velocity =  note.velocity #note[3]  # velocity: 0-127 value #
 
-                    self._control_surface.log_message(f"note pos = {note_position}")
+                    # self._control_surface.log_message(f"note pos = {note_position}")
                     # self._control_surface.log_message(f"self.width/height = {self.width}/{self.height}")
                     # self._control_surface.log_message(f"self.number_of_lines_per_note = {self.number_of_lines_per_note}")
                     # self._control_surface.log_message(f"self.quantization = {self.quantization}")
@@ -417,13 +417,13 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
                     #1.5 = 6
                     #1.75 = 7
 
-                    self._control_surface.log_message(f"note_page = {note_page}")
-                    self._control_surface.log_message(f"play_page = {play_page}")
-                    self._control_surface.log_message(f"play_row = {play_row}")
-                    self._control_surface.log_message(f"self page = {self._page}")
-
-                    self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
-                    self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
+                    # self._control_surface.log_message(f"note_page = {note_page}")
+                    # self._control_surface.log_message(f"play_page = {play_page}")
+                    # self._control_surface.log_message(f"play_row = {play_row}")
+                    # self._control_surface.log_message(f"self page = {self._page}")
+                    #
+                    # self._control_surface.log_message(f"note_grid_x_position = {note_grid_x_position}")
+                    # self._control_surface.log_message(f"note_grid_y_position = {note_grid_y_position}")
 
                     velocity_color = self.velocity_color_map[0]
                     for index in range(len(self.velocity_map)):
