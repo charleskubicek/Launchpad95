@@ -562,10 +562,10 @@ class CKStepSequencerComponent(CompoundComponent):
         self.update()
 
     def on_selected_track_changed(self):
-        if self._clip == None:
-            self._detect_scale_mode()
-            self.on_clip_slot_changed()
-            self.update()
+        self._control_surface.log_message(f"on_selected_track_changed self = {self}")
+        self._detect_scale_mode()
+        self.on_clip_slot_changed()
+        self.update()
 
     def _on_loop_changed(self):
         if self.is_enabled() and self._clip != None:
@@ -581,8 +581,7 @@ class CKStepSequencerComponent(CompoundComponent):
         clip_slot = self._clip_slot
 
         # update track if not track locked
-        if self._selected_track == None:
-            self._selected_track = self.song().view.selected_track
+        self._selected_track = self.song().view.selected_track
 
         # update scene
         if self._selected_track != None:
