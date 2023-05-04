@@ -211,6 +211,9 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_track_controller()
         self._scale_updated()
 
+        #legacy
+        self._is_mute_shifted = False
+
         self.set_scene_triggers()
         # TODO: maybe clean this... this should be done on enable.
         # self.on_clip_slot_changed()
