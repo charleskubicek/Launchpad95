@@ -38,7 +38,7 @@ colour_green_full = 60
 
 class CKNoteSelectorComponent(ControlSurfaceComponent):
 
-    def __init__(self, step_sequencer, buttons, control_surface):
+    def __init__(self, step_sequencer, buttons, control_surface, last_row_midi=False):
         self._clip = None
         self._step_sequencer = step_sequencer
         self._control_surface = control_surface
@@ -61,7 +61,12 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
         self._buttons[8].add_value_listener(self.half_clip_size_button_value)
         self._buttons[9].add_value_listener(self.duplicate_clip_button_value)
 
-        self._buttons[12].add_value_listener(self.shift_value_button)
+        self._shift_button_index = 12
+
+        if last_row_midi:
+            self._shift_button_index = 11
+
+        self._buttons[self._shift_button_index].add_value_listener(self.shift_value_button)
 
         self._key = 4
         self._root_note = 36
@@ -101,7 +106,7 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
             self._buttons[7].send_value(colour_red_full)
             self._buttons[8].send_value(colour_amber_low)
             self._buttons[9].send_value(colour_yellow)
-            self._buttons[12].send_value(colour_red_full)
+            self._buttons[self._shift_button_index].send_value(colour_red_full)
 
 
     @property
@@ -111,10 +116,10 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
     def shift_value_button(self, value):
         if value == 127:
             self._step_sequencer.shift_down()
-            self._buttons[12].send_value(colour_green_full)
+            self._buttons[self._shift_button_index].send_value(colour_green_full)
         else:
             self._step_sequencer.shift_up()
-            self._buttons[12].send_value(colour_red_full)
+            self._buttons[self._shift_button_index].send_value(colour_red_full)
 
     def note_dec_button_value(self, value):
         if value != 0:
@@ -169,7 +174,7 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
 
 class CKStepSequencerComponent(CompoundComponent):
 
-    def __init__(self, matrix, side_buttons, top_buttons, control_surface):
+    def __init__(self, matrix, side_buttons, top_buttons, control_surface, last_row_midi):
         self._osd = None
         self._control_surface = control_surface
         self._number_of_lines_per_note = 1
@@ -202,7 +207,9 @@ class CKStepSequencerComponent(CompoundComponent):
         self._quantization = 0.25
         self._beat = 0
 
+        # new
         self._selected_track = None
+        self._last_row_midi = last_row_midi
 
         # setup
         self._set_loop_selector()
@@ -210,6 +217,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_note_selector()
         self._set_track_controller()
         self._scale_updated()
+
 
         #legacy
         self._is_mute_shifted = False
@@ -250,9 +258,9 @@ class CKStepSequencerComponent(CompoundComponent):
     def _set_loop_selector(self):
         self._loop_selector = self.register_component(LoopSelectorComponent(self, [
             self._matrix.get_button(4, 4), self._matrix.get_button(5, 4), self._matrix.get_button(6, 4), self._matrix.get_button(7, 4),
-            self._matrix.get_button(4, 5), self._matrix.get_button(5, 5), self._matrix.get_button(6, 5), self._matrix.get_button(7, 5),
-            self._matrix.get_button(4, 6), self._matrix.get_button(5, 6), self._matrix.get_button(6, 6), self._matrix.get_button(7, 6),
-            self._matrix.get_button(4, 7), self._matrix.get_button(5, 7), self._matrix.get_button(6, 7), self._matrix.get_button(7, 7)],
+            self._matrix.get_button(4, 5), self._matrix.get_button(5, 5), self._matrix.get_button(6, 5), self._matrix.get_button(7, 5)],
+            # self._matrix.get_button(4, 6), self._matrix.get_button(5, 6), self._matrix.get_button(6, 6), self._matrix.get_button(7, 6),
+            # self._matrix.get_button(4, 7), self._matrix.get_button(5, 7), self._matrix.get_button(6, 7), self._matrix.get_button(7, 7),
                                                                             self._control_surface)
                                                       )
 
@@ -268,14 +276,16 @@ class CKStepSequencerComponent(CompoundComponent):
         # self._note_selector.set_up_button(self._side_buttons[4])#Stop
         # self._note_selector.set_down_button(self._side_buttons[5])#Trk On
 
+        pads = [
+            self._matrix.get_button(0, 4), self._matrix.get_button(1, 4), self._matrix.get_button(2, 4), self._matrix.get_button(3, 4),
+            self._matrix.get_button(0, 5), self._matrix.get_button(1, 5), self._matrix.get_button(2, 5), self._matrix.get_button(3, 5),
+            self._matrix.get_button(0, 6), self._matrix.get_button(1, 6), self._matrix.get_button(2, 6), self._matrix.get_button(3, 6),
+        ]
 
+        if not self._last_row_midi:
+            pads.extend([self._matrix.get_button(0, 7), self._matrix.get_button(1, 7), self._matrix.get_button(2, 7), self._matrix.get_button(3, 7)])
 
-        self._note_selector = self.register_component(CKNoteSelectorComponent(self, [
-                self._matrix.get_button(0, 4), self._matrix.get_button(1, 4), self._matrix.get_button(2, 4), self._matrix.get_button(3, 4),
-                self._matrix.get_button(0, 5), self._matrix.get_button(1, 5), self._matrix.get_button(2, 5), self._matrix.get_button(3, 5),
-                self._matrix.get_button(0, 6), self._matrix.get_button(1, 6), self._matrix.get_button(2, 6), self._matrix.get_button(3, 6),
-                self._matrix.get_button(0, 7), self._matrix.get_button(1, 7), self._matrix.get_button(2, 7), self._matrix.get_button(3, 7),
-        ], self._control_surface))
+        self._note_selector = self.register_component(CKNoteSelectorComponent(self, pads, self._control_surface, self._last_row_midi))
 
     def _set_track_controller(self):#Navigation buttons
         self._track_controller = self.register_component(TrackControllerComponent(self._control_surface, implicit_arm = False))

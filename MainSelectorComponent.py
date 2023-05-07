@@ -21,10 +21,10 @@ class MainSelectorComponent(ModeSelectorComponent):
 	""" Class that reassigns the button on the launchpad to different functions """
 
 
-	def __init__(self, matrix, top_buttons, side_buttons, config_button, osd, control_surface, note_repeat, c_instance):
+	def __init__(self, matrix, top_buttons, side_buttons, config_button, osd, control_surface, note_repeat, c_instance, last_row_midi):
 		#verify matrix dimentions
 		assert isinstance(matrix, ButtonMatrixElement)
-		assert ((matrix.width() == 8) and (matrix.height() == 8))
+		# assert ((matrix.width() == 8) and (matrix.height() == 8))
 		assert isinstance(top_buttons, tuple)
 		assert (len(top_buttons) == 8)
 		assert isinstance(side_buttons, tuple)
@@ -35,6 +35,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 		
 		#inject ControlSurface and OSD components (M4L)
 		self._matrix = matrix
+		self._last_row_midi = last_row_midi
 		self._nav_buttons = top_buttons[:4]#arrow buttons
 		self._mode_buttons = top_buttons[4:]#session,user1,user2,mixer buttons
 		self._side_buttons = side_buttons#launch buttons
@@ -92,17 +93,17 @@ class MainSelectorComponent(ModeSelectorComponent):
 		# self._sub_modes.set_update_callback(self._update_control_channels)
 
 		#User2 stepSequencer (Drum & Melodic)
-		self._stepseq = CKStepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface)
+		self._stepseq = CKStepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._last_row_midi)
 		self._stepseq.set_osd(self._osd)
 		
 		#User2 stepSequencer (Retro style)
-		self._stepseq2 = StepSequencerComponent2(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface)
+		self._stepseq2 = CKStepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._last_row_midi)
 		self._stepseq2.set_osd(self._osd)
 		
 		#User1 Instrument controller (Scale)
-		self._instrument_controller = InstrumentControllerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._note_repeat)
-		self._instrument_controller.set_osd(self._osd)
-		#self._instrument_controller = None
+		# self._instrument_controller = InstrumentControllerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._note_repeat)
+		# self._instrument_controller.set_osd(self._osd)
+		self._instrument_controller = None
 		
 		#User1 Device controller (Fx or Instrument parameters)
 		self._device_controller = DeviceComponent(control_surface = self._control_surface, matrix = self._matrix, side_buttons = self._side_buttons, top_buttons =  self._nav_buttons)
@@ -498,7 +499,11 @@ class MainSelectorComponent(ModeSelectorComponent):
 			button.set_enabled(active)
 
 	def _activate_matrix(self, active):
-		for scene_index in range(8):
+		rows = 8
+		if self._last_row_midi:
+			rows = 7
+
+		for scene_index in range(rows):
 			for track_index in range(8):
 				self._matrix.get_button(track_index, scene_index).set_enabled(active)
 

@@ -32,7 +32,7 @@ class SubSelectorComponent(ModeSelectorComponent):
 
 	def __init__(self, matrix, side_buttons, session, control_surface):
 		assert isinstance(matrix, ButtonMatrixElement)
-		assert ((matrix.width() == 8) and (matrix.height() == 8))
+		# assert ((matrix.width() == 8) and (matrix.height() == 8))
 		assert isinstance(side_buttons, tuple)
 		assert (len(side_buttons) == 8)
 		assert isinstance(session, SessionComponent)

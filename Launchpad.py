@@ -78,7 +78,8 @@ class Launchpad(ControlSurface):
 			self._challenge = Live.Application.get_random_int(0, 400000000) & 2139062143
 			self._init_done = False
 		# caller will send challenge and we will continue as challenge is received.
-		
+
+		self._last_row_midi = True
 			
 	def init(self):
 		#skip init if already done.
@@ -114,7 +115,12 @@ class Launchpad(ControlSurface):
 			self._user_byte_write_button.add_value_listener(self._user_byte_value)
 			matrix = ButtonMatrixElement()
 			matrix.name = 'Button_Matrix'
-			for row in range(8):
+			rows = 8
+
+			if self._last_row_midi:
+				rows = 7
+
+			for row in range(rows):
 				button_row = []
 				for column in range(8):
 					if self._mk2_rgb or self._mk3_rgb or self._lpx:
@@ -153,7 +159,7 @@ class Launchpad(ControlSurface):
 			self._osd = M4LInterface()
 			self._osd.name = "OSD"
 			self._init_note_repeat()
-			self._selector = MainSelectorComponent(matrix, tuple(top_buttons), tuple(side_buttons), self._config_button, self._osd, self, self._note_repeat, self._c_instance)
+			self._selector = MainSelectorComponent(matrix, tuple(top_buttons), tuple(side_buttons), self._config_button, self._osd, self, self._note_repeat, self._c_instance, self._last_row_midi)
 			self._selector.name = 'Main_Modes'
 			self._do_combine()
 			for control in self.controls:

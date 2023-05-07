@@ -770,7 +770,7 @@ class StepSequencerComponent(CompoundComponent):
         self._lock_button = None
         self.set_lock_button(self._side_buttons[1])#Pan
         self._selected_track = None
-            
+
     def _set_mute_shift_function(self): #Allow to mute notes in the grid or all notes if selecting on Note Selector #FIX bad behavior
         self._mute_shift_button = None
         self._last_mute_shift_button_press = time.time()
@@ -788,9 +788,9 @@ class StepSequencerComponent(CompoundComponent):
     def _set_loop_selector(self):
         self._loop_selector = self.register_component(LoopSelectorComponent(self, [
             self._matrix.get_button(4, 4), self._matrix.get_button(5, 4), self._matrix.get_button(6, 4), self._matrix.get_button(7, 4),
-            self._matrix.get_button(4, 5), self._matrix.get_button(5, 5), self._matrix.get_button(6, 5), self._matrix.get_button(7, 5),
-            self._matrix.get_button(4, 6), self._matrix.get_button(5, 6), self._matrix.get_button(6, 6), self._matrix.get_button(7, 6),
-            self._matrix.get_button(4, 7), self._matrix.get_button(5, 7), self._matrix.get_button(6, 7), self._matrix.get_button(7, 7)],
+            self._matrix.get_button(4, 5), self._matrix.get_button(5, 5), self._matrix.get_button(6, 5), self._matrix.get_button(7, 5)],
+            # self._matrix.get_button(4, 6), self._matrix.get_button(5, 6), self._matrix.get_button(6, 6), self._matrix.get_button(7, 6),
+            # self._matrix.get_button(4, 7), self._matrix.get_button(5, 7), self._matrix.get_button(6, 7), self._matrix.get_button(7, 7)],
             self._control_surface)
             )
             
