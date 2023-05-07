@@ -101,7 +101,7 @@ class CKNoteEditorComponent(ControlSurfaceComponent):
         return self._height
 
     def set_height(self, height):
-        # self._control_surface.log_message(f"set height to = {height}")
+        self._control_surface.log_message(f"set height to = {height}")
         self._height = height #min(height, 4)
 
     @property

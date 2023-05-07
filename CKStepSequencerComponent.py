@@ -544,16 +544,19 @@ class CKStepSequencerComponent(CompoundComponent):
         self._note_selector.set_enabled(self._mode != STEPSEQ_MODE_SCALE_EDIT)
         self._note_selector.update()
 
+    def note_editor_height(self):
+        midi_row_offset = 1 if self._last_row_midi else 0
+        return self._height - (4 - midi_row_offset)
+
     def _update_note_editor(self):
         # self._control_surface.log_message(f"self._mode = {self._mode}")
         # self._control_surface.log_message(f"self._height = {self._height}")
         # self._control_surface.log_message(f"self._mode = {self._mode == STEPSEQ_MODE_NORMAL}")
         self._note_editor.set_multinote(self._mode == STEPSEQ_MODE_MULTINOTE, self._number_of_lines_per_note)
-
         if self._mode == STEPSEQ_MODE_NORMAL:
-            self._note_editor.set_height(self._height - 4)
+            self._note_editor.set_height(self.note_editor_height())
         else:
-            self._note_editor.set_height(self._height)
+            self._note_editor.set_height(self.note_editor_height())
         self._note_editor.set_enabled(self._mode != STEPSEQ_MODE_SCALE_EDIT)
         self._note_editor.update()
 
