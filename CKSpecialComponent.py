@@ -1,3 +1,4 @@
+import Live
 from _Framework import Task
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 
@@ -18,14 +19,58 @@ class CKSpecialComponent(ControlSurfaceComponent):
 
         self._buttons[0].add_value_listener(self.rec_midi_button_value)
         self._buttons[0].send_value(colour_red_full)
+        self._buttons[1].add_value_listener(self.audio_to_simpler_value)
+        self._buttons[1].send_value(colour_red_full)
+        self._buttons[2].add_value_listener(self.record_midi_automation_button_value)
+        self._buttons[2].send_value(colour_red_full)
 
     def set_clip_slot(self, clip_slot):
         self._clip_slot = clip_slot
+
+    def record_midi_automation_button_value(self, v):
+        if v != 0:
+            self.record_midi_automation()
+
+    def rec_record_midi_automation(self, v):
+        if v != 0:
+            self._tasks.add(Task.sequence(Task.delay(1), Task.run(self.record_midi_automation)))
+
+    def record_midi_automation(self):
+        self.song().session_automation_record = True
+        self.song().record_mode = 1
 
     def rec_midi_button_value(self, v):
         self._control_surface.log_message(f"rec_midi_button_value v = {v}")
         if v != 0:
             self._tasks.add(Task.sequence(Task.delay(1), Task.run(self.record_midi_notes)))
+
+    def audio_to_simpler_value(self, v):
+        if v != 0:
+            self._tasks.add(Task.sequence(Task.delay(1), Task.run(self.audio_to_simpler)))
+
+    def audio_to_simpler(self):
+        original_track = self.song().view.selected_track
+
+        if original_track.has_midi_input:
+            self.show_message("Current track isn't an audio track")
+            return
+
+        song = self.song()
+        clip = self.song().view.highlighted_clip_slot.clip
+
+        Live.Conversions.create_midi_track_with_simpler(song, clip)
+        new_track = self.song().view.selected_track
+
+        self.log_message(f"original track naame: {original_track.name}")
+        self.log_message(f"     new track naame: {new_track.name}")
+        new_track.name = new_track.name + ' ' + original_track.name
+
+        device_deletions = 4
+        for i in range(0, device_deletions):
+            self.log_message(
+                f" deleting device at index: {len(new_track.devices) - 1}: {new_track.devices[len(new_track.devices) - 1].name}")
+            new_track.delete_device(len(new_track.devices) - 1)
+
 
     def record_midi_notes(self):
 

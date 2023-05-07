@@ -260,7 +260,11 @@ class CKStepSequencerComponent(CompoundComponent):
 
     def _set_special(self):
 
-        buttons = [self._matrix.get_button(4, 6), self._matrix.get_button(5, 6), self._matrix.get_button(6, 6), self._matrix.get_button(7, 6)]
+        buttons = [
+            self._matrix.get_button(4, 6),
+            self._matrix.get_button(5, 6),
+            self._matrix.get_button(6, 6),
+            self._matrix.get_button(7, 6)]
 
         self._special_component = self.register_component(
             CKSpecialComponent(self, buttons, self._control_surface, self._last_row_midi))
