@@ -1167,7 +1167,7 @@ class StepSequencerComponent(CompoundComponent):
                     self._scale_selector.from_object(self._clip_slot.clip)
                     #must set clip to None otherwise it trigger a clip note update which we dont want.
                     self._clip = None
-                    self._note_editor._clip = None
+                    self._note_editor._clip_slot = None
                     self._note_selector.set_scale(self._scale_selector.notes, self._scale_selector._key)
                     #self._control_surface.schedule_message(1, self._note_selector.set_selected_note,(self._scale_selector,self._scale_selector._octave * 12 + self._scale_selector._key))
                     self._note_selector.set_selected_note(self._scale_selector._octave * 12 + self._scale_selector._key)

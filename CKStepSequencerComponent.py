@@ -1,21 +1,24 @@
 import Live
+# from ableton.v2.base import task
+
+
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.CompoundComponent import CompoundComponent
 from _Framework.ButtonElement import ButtonElement
 from _Framework.Util import find_if
+
+from .CKSpecialComponent import CKSpecialComponent
 # logger = logging.getLogger(__name__)
-from .StepSequencerComponent import LoopSelectorComponent, NoteSelectorComponent
+from .StepSequencerComponent import LoopSelectorComponent
 from .CKNoteEditorComponent import CKNoteEditorComponent
 try:
     from itertools import imap
 except ImportError:
     # Python 3...
     imap=map
-from .NoteEditorComponent import NoteEditorComponent
 from .TrackControllerComponent import TrackControllerComponent
-import time
-from .ScaleComponent import ScaleComponent, MUSICAL_MODES, KEY_NAMES
 from .Settings import Settings
+from.CKUtils import *
 # quantization button colours. this must remain of length 4.
 QUANTIZATION_MAP = [1, 0.5, 0.25, 0.125]  # 1/4 1/8 1/16 1/32
 QUANTIZATION_NAMES = ["1/4", "1/8", "1/16", "1/32"]
@@ -25,16 +28,6 @@ STEPSEQ_MODE_MULTINOTE = 2
 STEPSEQ_MODE_SCALE_EDIT = 10
 
 LONG_BUTTON_PRESS = 1.0
-
-off = 12
-colour_red_flash = 11
-colour_red_low = 13
-colour_red_full = 15
-colour_amber_low = 29
-colour_amber_full = 63
-colour_yellow = 62
-colour_green_low = 28
-colour_green_full = 60
 
 class CKNoteSelectorComponent(ControlSurfaceComponent):
 
@@ -51,7 +44,7 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
 
         self._buttons[2].add_value_listener(self.velocity_dec_button_value)
         self._buttons[3].add_value_listener(self.velocity_inc_button_value)
-        
+
         self._buttons[4].add_value_listener(self.shift_left_button_value)
         self._buttons[5].add_value_listener(self.shift_right_button_value)
 
@@ -130,7 +123,7 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
         if value != 0:
             self._step_sequencer.increment_note()
 
-    
+
     def velocity_dec_button_value(self, value):
         if value != 0:
             self._step_sequencer.decrement_velocity()
@@ -139,11 +132,11 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
     def velocity_inc_button_value(self, value):
         if value != 0:
             self._step_sequencer.increment_velocity()
-            
+
     def shift_left_button_value(self, v):
         if v != 0:
             self._step_sequencer.shift_clip_notes_left()
-            
+
     def shift_right_button_value(self, v):
         if v != 0:
             self._step_sequencer.shift_clip_notes_right()
@@ -216,6 +209,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._set_note_editor()
         self._set_note_selector()
         self._set_track_controller()
+        self._set_special()
         self._scale_updated()
 
 
@@ -263,6 +257,13 @@ class CKStepSequencerComponent(CompoundComponent):
             # self._matrix.get_button(4, 7), self._matrix.get_button(5, 7), self._matrix.get_button(6, 7), self._matrix.get_button(7, 7),
                                                                             self._control_surface)
                                                       )
+
+    def _set_special(self):
+
+        buttons = [self._matrix.get_button(4, 6), self._matrix.get_button(5, 6), self._matrix.get_button(6, 6), self._matrix.get_button(7, 6)]
+
+        self._special_component = self.register_component(
+            CKSpecialComponent(self, buttons, self._control_surface, self._last_row_midi))
 
     #Allow to manipulate the LP grid and Live's Clip notes (add/del, velocity, mute, etc)
     #In charge of refreshing the notes LED matrix
@@ -548,6 +549,7 @@ class CKStepSequencerComponent(CompoundComponent):
         # self._control_surface.log_message(f"self._height = {self._height}")
         # self._control_surface.log_message(f"self._mode = {self._mode == STEPSEQ_MODE_NORMAL}")
         self._note_editor.set_multinote(self._mode == STEPSEQ_MODE_MULTINOTE, self._number_of_lines_per_note)
+
         if self._mode == STEPSEQ_MODE_NORMAL:
             self._note_editor.set_height(self._height - 4)
         else:
@@ -634,7 +636,7 @@ class CKStepSequencerComponent(CompoundComponent):
                 if Settings.STEPSEQ__SAVE_SCALE != None and Settings.STEPSEQ__SAVE_SCALE == "clip":
                     #must set clip to None otherwise it trigger a clip note update which we dont want.
                     self._clip = None
-                    self._note_editor._clip = None
+                    self._note_editor._clip_slot = None
 
                 # link new clip
                 self._clip_slot.clip.add_notes_listener(self._on_notes_changed)
@@ -674,9 +676,11 @@ class CKStepSequencerComponent(CompoundComponent):
             self._clip_changed()
 
     def _clip_changed(self):  # triggered by _on_clip_slot_changed() or manually on enable.
+        self._control_surface.log_message(f"_clip_changed self._clip_changed = {self._clip_slot}")
         self._note_editor.set_clip(self._clip)
         self._note_selector.set_clip(self._clip)
         self._loop_selector.set_clip(self._clip)
+        self._special_component.set_clip_slot(self._clip_slot)
         self._note_editor.set_playhead(None)
         # self._note_selector.set_playhead(None)
         self._loop_selector.set_playhead(None)

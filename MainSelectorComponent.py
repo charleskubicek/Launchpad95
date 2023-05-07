@@ -4,6 +4,7 @@ from _Framework.ModeSelectorComponent import ModeSelectorComponent
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
 from _Framework.SessionZoomingComponent import DeprecatedSessionZoomingComponent# noqa
+
 from .DeviceComponent import DeviceComponent
 from .SpecialSessionComponent import SpecialSessionComponent
 from .InstrumentControllerComponent import InstrumentControllerComponent
@@ -95,10 +96,11 @@ class MainSelectorComponent(ModeSelectorComponent):
 		#User2 stepSequencer (Drum & Melodic)
 		self._stepseq = CKStepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._last_row_midi)
 		self._stepseq.set_osd(self._osd)
-		
+
 		#User2 stepSequencer (Retro style)
-		self._stepseq2 = CKStepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._last_row_midi)
-		self._stepseq2.set_osd(self._osd)
+		# self._stepseq2 = StepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._last_row_midi)
+		# self._stepseq2.set_osd(self._osd)
+		self._stepseq2 = None
 		
 		#User1 Instrument controller (Scale)
 		# self._instrument_controller = InstrumentControllerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface, self._note_repeat)
