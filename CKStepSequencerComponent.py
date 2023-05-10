@@ -197,6 +197,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._chromatic_scale = []
         self._diatonic_scale = []
 
+        self._quantization_index = 2 # keep new clip creation happy
         self._quantization = 0.25
         self._beat = 0
 
