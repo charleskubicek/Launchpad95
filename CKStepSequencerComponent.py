@@ -162,7 +162,8 @@ class CKNoteSelectorComponent(ControlSurfaceComponent):
         self._clip = clip
 
     def set_note_cache(self, note_cache):
-        self._note_cache = note_cache
+        pass
+
 
 
 class CKStepSequencerComponent(CompoundComponent):
@@ -178,7 +179,6 @@ class CKStepSequencerComponent(CompoundComponent):
         # clip
         self._clip = None
         self._clip_slot = None
-        self._note_cache = []
         self._playhead = 0
         self._new_clip_pages = 4
         # mode
@@ -696,22 +696,7 @@ class CKStepSequencerComponent(CompoundComponent):
         self._on_notes_changed()
 
     def _on_notes_changed(self):  # trigger by callback on clip or via _clip_changed.
-        if self.is_enabled():
-            # get notes
-            if self._clip == None:
-                note_cache = []
-            else:
-                self._clip.select_all_notes()
-                note_cache = self._clip.get_selected_notes()
-                self._clip.deselect_all_notes()
-
-            # update if needed
-            if note_cache != self._note_cache:
-                self._note_cache = note_cache
-                self._note_editor.set_note_cache(self._note_cache)
-                self._note_selector.set_note_cache(self._note_cache)
-                self._loop_selector.set_note_cache(self._note_cache)
-                self._note_editor.update()
+        pass
 
     # PLAY POSITION
     def _on_playing_status_changed(self):  # playing status changed listener
