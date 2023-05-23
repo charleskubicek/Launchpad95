@@ -15,10 +15,7 @@ from _Framework.SceneComponent import SceneComponent
 from .SpecialProSessionComponent import SpecialProSessionComponent
 import Live
 import time
-try:
-    exec("from .Settings import Settings")
-except ImportError:
-    exec("from .Settings import *")
+from .Settings import Settings
 
 class MainSelectorComponent(ModeSelectorComponent):
 

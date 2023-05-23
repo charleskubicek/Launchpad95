@@ -8,16 +8,7 @@ from .ConfigurableButtonElement import ConfigurableButtonElement
 from .MainSelectorComponent import MainSelectorComponent
 from .NoteRepeatComponent import NoteRepeatComponent
 from .M4LInterface import M4LInterface
-try:
-    exec("from .Settings import Settings")
-except ImportError:
-    exec("from .Settings import *")
-
-#fix for python3
-try:
-    xrange
-except NameError:
-    xrange = range
+from .Settings import Settings
 
 DO_COMBINE = Live.Application.combine_apcs()  # requires 8.2 & higher
 
@@ -52,7 +43,7 @@ STANDALONE_MODE = 0
 STD_MSG_HEADER = (SYSEX_START,) + NOVATION_MANUFACTURER_ID + (2, )
 
 
-class Launchpad(ControlSurface):
+class CK_Launchpad(ControlSurface):
 
 	_active_instances = []
 	
@@ -207,10 +198,10 @@ class Launchpad(ControlSurface):
 
 	def _combine_active_instances():
 		support_devices = False
-		for instance in Launchpad._active_instances:
+		for instance in CK_Launchpad._active_instances:
 			support_devices |= (instance._device_component != None)
 		offset = 0
-		for instance in Launchpad._active_instances:
+		for instance in CK_Launchpad._active_instances:
 			instance._activate_combination_mode(offset, support_devices)
 			offset += instance._selector._session.width()
 
@@ -223,18 +214,18 @@ class Launchpad(ControlSurface):
 			self._selector._session.link_with_track_offset(track_offset)
 
 	def _do_combine(self):
-		if (DO_COMBINE and (self not in Launchpad._active_instances)):
-			Launchpad._active_instances.append(self)
-			Launchpad._combine_active_instances()
+		if (DO_COMBINE and (self not in CK_Launchpad._active_instances)):
+			CK_Launchpad._active_instances.append(self)
+			CK_Launchpad._combine_active_instances()
 
 	def _do_uncombine(self):
-		if self in Launchpad._active_instances:
-			Launchpad._active_instances.remove(self)
+		if self in CK_Launchpad._active_instances:
+			CK_Launchpad._active_instances.remove(self)
 			if(Settings.SESSION__LINK):
 				self._selector._session.unlink()
 			if(Settings.STEPSEQ__LINK_WITH_SESSION):
 				self._selector._stepseq.unlink()
-			Launchpad._combine_active_instances()
+			CK_Launchpad._combine_active_instances()
 
 	def refresh_state(self):
 		ControlSurface.refresh_state(self)
@@ -328,7 +319,7 @@ class Launchpad(ControlSurface):
 		# mk3 and LPX
 		self._send_midi(SYSEX_IDENTITY_REQUEST_MESSAGE)
 		# mk2
-		challenge_bytes = tuple([ self._challenge >> 8 * index & 127 for index in xrange(4) ])
+		challenge_bytes = tuple([ self._challenge >> 8 * index & 127 for index in range(4) ])
 		self._send_midi((240, 0, 32, 41, 2, 24, 64) + challenge_bytes + (247,))
 		# mk1's
 		for index in range(4):
