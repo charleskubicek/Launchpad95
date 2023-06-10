@@ -279,11 +279,11 @@ class Colors:
 			class VelocityShifted:
 				On = Rgb.AMBER
 				Off = Rgb.AMBER_THIRD
-			Velocity0 = Rgb.GREEN_THIRD
-			Velocity1 = Rgb.GREEN_HALF
-			Velocity2 = Rgb.GREEN
-			Velocity3 = Rgb.AMBER_HALF
-			Velocity4 = Rgb.AMBER
+			Velocity0 = Rgb.AMBER_THIRD
+			Velocity1 = Rgb.AMBER_HALF
+			Velocity2 = Rgb.GREEN_THIRD
+			Velocity3 = Rgb.GREEN_HALF
+			Velocity4 = Rgb.GREEN
 			Muted = Rgb.DARK_GREY
 			Playing = Rgb.RED
 			Metronome = Rgb.BLUE
@@ -446,7 +446,14 @@ class Colors:
 			Flam = Rgb.PURPLE
 			Selected = Rgb.RED
 			Note = Rgb.RED_HALF	
-			Tripplet = Rgb.RED_THIRD			
+			Tripplet = Rgb.RED_THIRD
+
+
+	class CKSeq:
+		Off = Rgb.BLACK
+		LightBlue = Rgb.LIGHT_BLUE
+		Blue = Rgb.BLUE
+		Shift = Rgb.RED
 
 def make_skin():
 	return Skin(Colors)

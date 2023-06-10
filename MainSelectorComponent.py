@@ -13,6 +13,7 @@ from .StepSequencerComponent2 import StepSequencerComponent2
 from .NoteRepeatComponent import NoteRepeatComponent
 from _Framework.SceneComponent import SceneComponent
 from .SpecialProSessionComponent import SpecialProSessionComponent
+from .CKStepSequencerComponent import CKStepSequencerComponent
 import Live
 import time
 from .Settings import Settings
@@ -94,7 +95,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 		self._stepseq.set_osd(self._osd)
 		
 		#User2 stepSequencer (Retro style)
-		self._stepseq2 = StepSequencerComponent2(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface)
+		self._stepseq2 = CKStepSequencerComponent(self._matrix, self._side_buttons, self._nav_buttons, self._control_surface)
 		self._stepseq2.set_osd(self._osd)
 		
 		#User1 Instrument controller (Scale)

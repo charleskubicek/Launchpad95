@@ -446,8 +446,8 @@ class Colors:
 			Flam = Rgb.GREEN_THIRD
 			Selected = Rgb.RED
 			Note = Rgb.RED_HALF	
-			Tripplet = Rgb.RED_THIRD		
-			
+			Tripplet = Rgb.RED_THIRD
+
 def make_skin():
 	return Skin(Colors)
 

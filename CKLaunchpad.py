@@ -141,6 +141,10 @@ class CK_Launchpad(ControlSurface):
 			side_buttons[5].name = 'Trk_On_Button'
 			side_buttons[6].name = 'Solo_Button'
 			side_buttons[7].name = 'Arm_Button'
+
+			for i in range(8):
+				side_buttons[i].identifier = f'{i}'
+
 			self._osd = M4LInterface()
 			self._osd.name = "OSD"
 			self._init_note_repeat()
